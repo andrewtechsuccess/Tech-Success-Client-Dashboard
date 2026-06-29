@@ -1,0 +1,29 @@
+{
+  "name": "tech-success-client-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tech Success — Client Dashboard: an MSP client / products / projects tracker.",
+  "workspaces": [
+    "client"
+  ],
+  "scripts": {
+    "setup": "node setup.js",
+    "start": "node server/index.js",
+    "dev:api": "node --watch server/index.js",
+    "dev:web": "npm --workspace client run dev",
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "build": "npm --workspace client run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

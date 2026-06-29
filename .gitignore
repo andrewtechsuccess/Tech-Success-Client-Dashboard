@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+
+# build output
+client/dist/
+
+# runtime data & secrets — NEVER commit (client records, password hash, JWT secret)
+data/
+
+# logs / misc
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,128 @@
+// Shared constants + derived helpers for the client dashboard. Kept in one
+// place so the board, projects view, editor and expanded view agree on labels,
+// colours, and rules. Status values mirror server/catalog.js + server/routes/clients.js.
+
+// Product rollout status. "not_needed" is hidden on the client card.
+export const PRODUCT_STATUSES = [
+  { value: 'not_started', label: 'Not started', cls: 'not_started' },
+  { value: 'planning', label: 'Planning', cls: 'planning' },
+  { value: 'in_progress', label: 'In progress', cls: 'in_progress' },
+  { value: 'complete', label: 'Complete', cls: 'complete' },
+  { value: 'not_needed', label: 'Not needed', cls: 'not_needed' }
+];
+
+// Project / issue pipeline status.
+export const PROJECT_STATUSES = [
+  { value: 'opportunity', label: 'Opportunity', cls: 'opportunity' },
+  { value: 'sow', label: 'SOW', cls: 'sow' },
+  { value: 'approved', label: 'Approved', cls: 'approved' },
+  { value: 'in_progress', label: 'In progress', cls: 'in_progress' },
+  { value: 'completed', label: 'Completed', cls: 'completed' }
+];
+
+export const PROJECT_TYPES = [
+  { value: 'project', label: 'Project' },
+  { value: 'issue', label: 'Issue' }
+];
+
+export const PRIORITIES = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'urgent', label: 'Urgent' }
+];
+
+// Current plan / agreement status for a client.
+export const PLAN_STATUSES = ['New TPS', 'TSP', 'TSP Basic', 'Adhoc'];
+
+// External per-client links rendered as buttons in the expanded view (each
+// hidden when its URL is blank). Stored as their own client fields.
+export const CLIENT_LINKS = [
+  { key: 'docsLink', label: 'Sharepoint Doc' },
+  { key: 'clientDashboardLink', label: 'Client Dashboard' },
+  { key: 'oneNoteLink', label: 'OneNote' },
+  { key: 'itBoostLink', label: 'IT Boost' }
+];
+
+const labelMap = (arr) => Object.fromEntries(arr.map((o) => [o.value, o.label]));
+export const PRODUCT_STATUS_LABEL = labelMap(PRODUCT_STATUSES);
+export const PROJECT_STATUS_LABEL = labelMap(PROJECT_STATUSES);
+export const PRIORITY_LABEL = labelMap(PRIORITIES);
+
+export const UNASSIGNED = 'Unassigned';
+
+// Make a manually-entered link safe to open externally (prepend scheme if missing).
+export const externalHref = (u) => {
+  const s = (u || '').trim();
+  if (!s) return '';
+  return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+};
+
+// Sentiment 1-5 → clamped value + colour (1-2 red, 3 amber, 4-5 green).
+export function sentimentInfo(v) {
+  const n = Math.min(5, Math.max(1, Math.round(Number(v) || 3)));
+  const color = n <= 2 ? 'var(--danger)' : n === 3 ? 'var(--warn)' : 'var(--ok)';
+  return { value: n, color };
+}
+
+// Derived health for a client card, from product rollout (ignoring "not needed").
+export function clientHealth(client) {
+  const products = (client.products || []).filter((p) => p.status !== 'not_needed');
+  if (products.length && products.every((p) => p.status === 'complete')) return { level: 'green', label: 'All complete' };
+  if (products.some((p) => p.status === 'in_progress' || p.status === 'planning')) return { level: 'amber', label: 'In progress' };
+  return { level: 'neutral', label: 'Not started' };
+}
+
+// Products visible on the card (everything except "not needed").
+export const visibleProducts = (client) => (client.products || []).filter((p) => p.status !== 'not_needed');
+
+// Roll-up product counts across a list of clients for the summary strip.
+export function summarize(clients) {
+  let planning = 0, inProgress = 0, complete = 0;
+  for (const c of clients) {
+    for (const p of c.products || []) {
+      if (p.status === 'planning') planning++;
+      else if (p.status === 'in_progress') inProgress++;
+      else if (p.status === 'complete') complete++;
+    }
+  }
+  return { clients: clients.length, planning, inProgress, complete };
+}
+
+// Distinct account-manager names across clients (for the editor's datalist and grouping).
+export function accountManagers(clients) {
+  const set = new Set();
+  for (const c of clients) {
+    const am = (c.accountManager || '').trim();
+    if (am) set.add(am);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+// Distinct project owners across all clients' projects (for the people filter).
+export function projectOwners(clients) {
+  const set = new Set();
+  for (const c of clients) {
+    for (const p of c.projects || []) {
+      const o = (p.owner || '').trim();
+      if (o) set.add(o);
+    }
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+// Existing staff list = everyone already known in the system (account managers
+// + anyone already assigned as a project manager). Populates the Project
+// Manager dropdown on projects.
+export function staffList(clients) {
+  const set = new Set();
+  for (const c of clients) {
+    const am = (c.accountManager || '').trim();
+    if (am) set.add(am);
+    for (const p of c.projects || []) {
+      const o = (p.owner || '').trim();
+      if (o) set.add(o);
+    }
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
