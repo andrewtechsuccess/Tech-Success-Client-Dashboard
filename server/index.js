@@ -33,7 +33,7 @@ app.use((err, req, res, next) => {
   if (!res.headersSent) res.status(status).json({ error: err.message || 'Server error' });
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4100;
 app.listen(PORT, () => {
   console.log(`\n  Tech Success — Client Dashboard  →  http://localhost:${PORT}\n`);
   if (!fs.existsSync(CLIENT_DIST)) {

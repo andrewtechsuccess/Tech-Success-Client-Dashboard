@@ -27,7 +27,7 @@ npm run build
 npm start
 ```
 
-Then open **http://localhost:4000**. Default password is `admin` until you run `node setup.js`.
+Then open **http://localhost:4100**. Default password is `admin` until you run `node setup.js`.
 
 ### Development mode (live reload)
 
@@ -35,7 +35,7 @@ Then open **http://localhost:4000**. Default password is `admin` until you run `
 npm run dev
 ```
 
-Runs the API on `:4000` and the Vite dev server on `:5173` (open `:5173`).
+Runs the API on `:4100` and the Vite dev server on `:5273` (open `:5273`).
 
 ## Data & privacy
 
