@@ -25,6 +25,14 @@ export const PROJECT_TYPES = [
   { value: 'issue', label: 'Issue' }
 ];
 
+// Whether a project is part of the agreed scope or an extra. Defaults to
+// in_scope for any project that predates this field.
+export const PROJECT_SCOPES = [
+  { value: 'in_scope', label: 'In Scope' },
+  { value: 'extra', label: 'Extra' }
+];
+export const projectScope = (p) => (p?.scope === 'extra' ? 'extra' : 'in_scope');
+
 export const PRIORITIES = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
@@ -47,6 +55,7 @@ export const CLIENT_LINKS = [
 const labelMap = (arr) => Object.fromEntries(arr.map((o) => [o.value, o.label]));
 export const PRODUCT_STATUS_LABEL = labelMap(PRODUCT_STATUSES);
 export const PROJECT_STATUS_LABEL = labelMap(PROJECT_STATUSES);
+export const PROJECT_SCOPE_LABEL = labelMap(PROJECT_SCOPES);
 export const PRIORITY_LABEL = labelMap(PRIORITIES);
 
 export const UNASSIGNED = 'Unassigned';

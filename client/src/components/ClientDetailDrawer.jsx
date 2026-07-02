@@ -5,6 +5,7 @@ import {
   PRODUCT_STATUSES,
   PROJECT_STATUSES,
   PROJECT_TYPES,
+  PROJECT_SCOPES,
   PRIORITIES,
   PLAN_STATUSES,
   CLIENT_LINKS,
@@ -21,6 +22,7 @@ const newProject = () => ({
   id: uid(),
   title: '',
   type: 'project',
+  scope: 'in_scope',
   status: 'opportunity',
   priority: 'medium',
   owner: '',
@@ -236,6 +238,13 @@ export default function ClientDetailDrawer({ client, onClose }) {
                     {PROJECT_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>
                         {t.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select value={j.scope || 'in_scope'} onChange={(e) => setProject(j.id, { scope: e.target.value })}>
+                    {PROJECT_SCOPES.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
                       </option>
                     ))}
                   </select>

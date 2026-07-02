@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
+import BrandLogo from '../components/BrandLogo.jsx';
 
 export default function Login() {
   const { login } = useAuth();
@@ -26,7 +27,7 @@ export default function Login() {
     <div className="login-wrap">
       <form className="login-card" onSubmit={submit}>
         <div className="login-logo">
-          <span className="logo">📊</span> Client Dashboard
+          <BrandLogo className="logo" size={32} /> Client Dashboard
         </div>
         <p className="muted">Tech Success — MSP client tracker</p>
         <input

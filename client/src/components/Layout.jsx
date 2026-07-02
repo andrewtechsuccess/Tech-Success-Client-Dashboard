@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
+import BrandLogo from './BrandLogo.jsx';
 
 export default function Layout({ children }) {
   const { logout } = useAuth();
@@ -12,7 +13,7 @@ export default function Layout({ children }) {
       <div className="main">
         <header className="topbar">
           <div className="brand" style={{ padding: 0 }}>
-            <span className="logo">📊</span> Client Dashboard
+            <BrandLogo className="logo" size={26} /> Client Dashboard
           </div>
           <div className="spacer" />
           <Link className={active('/')} to="/">

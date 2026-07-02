@@ -5,6 +5,7 @@ import {
   visibleProducts,
   sentimentInfo,
   externalHref,
+  projectScope,
   CLIENT_LINKS,
   PRODUCT_STATUS_LABEL,
   PROJECT_STATUS_LABEL
@@ -107,8 +108,10 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
                   <span className="ev-proj-title">
                     {j.title}
                     {j.type === 'issue' && <span className="proj-tag">issue</span>}
+                    {projectScope(j) === 'extra' && <span className="scope-tag extra">Extra</span>}
                   </span>
                   {j.owner && <span className="muted sm nowrap">{j.owner}</span>}
+                  {j.due && <span className="muted sm nowrap" title="Due date">{j.due}</span>}
                   {j.connectwiseLink && (
                     <a className="cw-btn" href={externalHref(j.connectwiseLink)} target="_blank" rel="noopener noreferrer" title="Open ConnectWise project">
                       ↗

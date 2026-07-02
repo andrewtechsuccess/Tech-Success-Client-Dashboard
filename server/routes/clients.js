@@ -15,6 +15,7 @@ const getClients = () => readJson(CLIENTS_PATH, []);
 // first/default so a bad client payload can never poison the board.
 const PROJECT_STATUSES = new Set(['opportunity', 'sow', 'approved', 'in_progress', 'completed']);
 const PROJECT_TYPES = new Set(['project', 'issue']);
+const PROJECT_SCOPES = new Set(['in_scope', 'extra']);
 const PRIORITIES = new Set(['low', 'medium', 'high', 'urgent']);
 const PLAN_STATUSES = new Set(['New TPS', 'TSP', 'TSP Basic', 'Adhoc']);
 
@@ -70,6 +71,7 @@ function normProjects(arr) {
       id: p?.id || randomUUID(),
       title: str(p?.title),
       type: PROJECT_TYPES.has(p?.type) ? p.type : 'project',
+      scope: PROJECT_SCOPES.has(p?.scope) ? p.scope : 'in_scope',
       status: PROJECT_STATUSES.has(p?.status) ? p.status : 'opportunity',
       priority: PRIORITIES.has(p?.priority) ? p.priority : 'medium',
       owner: str(p?.owner),

@@ -71,7 +71,7 @@ code {
   color: var(--muted);
 }
 .sm {
-  font-size: 12px;
+  font-size: 13px;
 }
 .pad {
   padding: 12px;
@@ -149,7 +149,9 @@ code {
   gap: 8px;
 }
 .logo {
-  filter: drop-shadow(0 0 6px var(--accent));
+  display: block;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 .tree {
   margin-top: 12px;
@@ -184,7 +186,7 @@ code {
   white-space: nowrap;
 }
 .chev {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   transition: transform 0.12s ease;
 }
@@ -198,7 +200,7 @@ code {
   flex-shrink: 0;
 }
 .code {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   background: var(--panel-2);
   border: 1px solid var(--border);
@@ -212,7 +214,7 @@ code {
   border-left: 1px solid var(--border);
 }
 .cat-name {
-  font-size: 10px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--muted);
@@ -245,12 +247,12 @@ code {
   flex-shrink: 0;
 }
 .empty-sm {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   padding: 4px 8px;
 }
 .warn-badge {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
   background: var(--warn);
@@ -292,7 +294,7 @@ code {
 }
 .btn.sm {
   padding: 5px 10px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .btn.block {
   width: 100%;
@@ -364,7 +366,7 @@ code {
   margin-top: 10px;
 }
 .pill {
-  font-size: 12px;
+  font-size: 13px;
   border: 1px solid var(--border);
   background: var(--panel-2);
   padding: 3px 10px;
@@ -430,7 +432,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -457,7 +459,7 @@ textarea {
   font-size: 13px;
 }
 .hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   text-align: center;
   margin-top: 6px;
@@ -521,7 +523,7 @@ textarea {
 }
 .term-title {
   margin-left: 6px;
-  font-size: 11px;
+  font-size: 13px;
   color: #6b7794;
   font-family: 'Cascadia Code', monospace;
 }
@@ -563,12 +565,12 @@ textarea {
   padding: 8px 14px;
   border-top: 1px solid #1b2233;
   background: #0a0e17;
-  font-size: 12px;
+  font-size: 13px;
   display: flex;
   align-items: center;
 }
 .badge {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 6px;
@@ -600,7 +602,7 @@ textarea {
   gap: 8px;
 }
 .reports-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 
@@ -728,7 +730,7 @@ textarea {
   border: none;
   color: var(--accent-2);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   margin-left: 8px;
   padding: 0;
 }
@@ -749,7 +751,7 @@ textarea {
 .param-row input,
 .param-row select {
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .param-row input:first-child {
   max-width: 110px;
@@ -761,7 +763,7 @@ textarea {
 .code-head {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   background: var(--panel-2);
 }
@@ -832,7 +834,7 @@ textarea {
 .hist {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 .hist th {
   text-align: left;
@@ -919,7 +921,7 @@ textarea {
   line-height: 1.1;
 }
 .ds-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 2px;
 }
@@ -1003,7 +1005,7 @@ textarea {
   white-space: nowrap;
 }
 .bch-count {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   background: var(--panel-2);
   border: 1px solid var(--border);
@@ -1017,7 +1019,7 @@ textarea {
   padding: 12px;
 }
 .col-hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   font-style: italic;
 }
@@ -1078,7 +1080,7 @@ textarea {
   gap: 6px;
 }
 .prod-pill {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   padding: 2px 9px;
   border-radius: 999px;
@@ -1131,16 +1133,16 @@ textarea {
   border-color: rgba(34, 197, 94, 0.4);
 }
 .cc-progress {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
 }
 .cc-empty {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   font-style: italic;
 }
 .cc-section-title {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--muted);
@@ -1151,7 +1153,7 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-dim);
 }
 .proj-summary > span {
@@ -1172,7 +1174,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-dim);
 }
 .proj-dot {
@@ -1203,7 +1205,7 @@ textarea {
   color: var(--muted);
 }
 .proj-tag {
-  font-size: 9px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--danger);
@@ -1215,7 +1217,7 @@ textarea {
 }
 .cw-btn {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1;
   color: var(--accent-2);
   border: 1px solid var(--border);
@@ -1223,6 +1225,23 @@ textarea {
   border-radius: 5px;
   padding: 3px 6px;
   text-decoration: none;
+}
+/* In Scope / Extra scope tag */
+.scope-tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.scope-tag.extra {
+  color: var(--accent-2);
+  background: rgba(129, 140, 248, 0.14);
+  border-color: rgba(129, 140, 248, 0.4);
 }
 .cw-btn:hover {
   border-color: var(--accent);
@@ -1257,7 +1276,7 @@ textarea {
 
 /* Projects table */
 .proj-status {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   padding: 2px 9px;
   border-radius: 999px;
@@ -1300,7 +1319,7 @@ textarea {
   background: var(--panel-2);
   border: 1px solid var(--border);
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 13px;
   padding: 2px 8px;
   border-radius: 6px;
   cursor: pointer;
@@ -1316,7 +1335,7 @@ textarea {
   flex-wrap: wrap;
 }
 .plan-pill {
-  font-size: 10px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--accent-2);
@@ -1335,7 +1354,7 @@ textarea {
   border-radius: 50%;
 }
 .cc-docs {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--accent-2);
   text-decoration: none;
 }
@@ -1384,6 +1403,307 @@ textarea {
 /* Projects view filter selects */
 .filter-select {
   width: auto;
+}
+
+/* ---------- Inline quick-edit status menu ---------- */
+/* Product pills become clickable buttons (keep the pill look). */
+button.prod-pill {
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+}
+button.prod-pill.quick:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+/* Project status dot becomes a clickable hit-target. */
+.proj-dot-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  margin: 0 2px 0 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.proj-dot-btn:hover {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.quick-menu {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 6px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.qm-title {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 4px 6px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qm-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px 6px;
+  border-radius: 6px;
+  text-align: left;
+}
+.qm-item:hover {
+  background: var(--panel-2);
+}
+.qm-item.on {
+  background: var(--panel-2);
+}
+.qm-check {
+  margin-left: auto;
+  color: var(--accent-2);
+  font-size: 13px;
+}
+
+/* ---------- Projects kanban ---------- */
+/* Stretch columns to equal height so there's a generous drop zone in the blank
+   space below the cards (the whole column is a drop target). */
+.kan-board {
+  align-items: stretch;
+  min-height: 60vh;
+}
+.kan-col {
+  transition: border-color 0.12s, background 0.12s;
+}
+.kan-col.drop-target {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+/* Tall body so there's always a generous blank drop zone below the cards; the
+   whole column is the drop target, so dropping into this space works. */
+.kan-body {
+  flex: 1 1 auto;
+  min-height: 360px;
+}
+.kan-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  cursor: grab;
+}
+.kan-card:active {
+  cursor: grabbing;
+}
+.kan-card.dragging {
+  opacity: 0.45;
+}
+.kan-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.kan-title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.3;
+  flex: 1;
+}
+.kan-edit {
+  flex: 0 0 auto;
+}
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* At-risk view */
+.risk-pill {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.risk-pill.red {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.risk-pill.amber {
+  color: var(--warn);
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.risk-pill.green {
+  color: var(--ok);
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+.check-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.check-inline input {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Insights view */
+.insight-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.insight-card h3 {
+  margin: 0 0 14px;
+  font-size: 15px;
+}
+.insight-card .gap-sub {
+  margin: -8px 0 14px;
+}
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.bar-row:last-child {
+  margin-bottom: 0;
+}
+.bar-label {
+  flex: 0 0 130px;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bar-track {
+  flex: 1;
+  height: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bar-track.sm {
+  height: 9px;
+  min-width: 70px;
+}
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+.bar-fill.ok {
+  background: var(--ok);
+}
+.bar-fill.warn {
+  background: var(--warn);
+}
+.bar-fill.danger {
+  background: var(--danger);
+}
+.bar-val {
+  flex: 0 0 90px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--muted);
+}
+.wl-bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.wl-bar .bar-track {
+  flex: 1;
+}
+.kan-client {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.kan-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kan-meta .cw-btn {
+  margin-left: auto;
+}
+.kan-fields {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 7px;
+  border-top: 1px solid var(--border);
+}
+.kan-field {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+}
+.kf-label {
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.kf-val {
+  color: var(--text-dim);
+}
+.kf-val.muted {
+  color: var(--muted);
+}
+
+/* Priority pill */
+.prio-pill {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-dim);
+}
+.prio-pill.high {
+  color: var(--warn);
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.prio-pill.urgent {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 input[type='range'].range {
   width: 100%;
@@ -1583,7 +1903,7 @@ input[type='range'].range {
   white-space: nowrap;
 }
 .sub-label {
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--muted);
@@ -1648,7 +1968,7 @@ input[type='range'].range {
 }
 .picker-label {
   display: block;
-  font-size: 10px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--muted);
@@ -1725,7 +2045,7 @@ input[type='range'].range {
   cursor: pointer;
   padding: 7px 8px;
   border-radius: 7px;
-  font-size: 10px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   text-align: left;
@@ -1742,7 +2062,7 @@ input[type='range'].range {
   white-space: nowrap;
 }
 .cat-count {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
   background: var(--panel-2);
   border: 1px solid var(--border);

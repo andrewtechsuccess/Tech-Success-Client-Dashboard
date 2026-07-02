@@ -29,7 +29,7 @@ export function applyCatalogToClient(client, catalog) {
       name,
       status: prev && PRODUCT_STATUSES.has(prev.status) ? prev.status : 'not_started',
       template: true,
-      note: ''
+      note: prev?.note || ''
     };
   });
   const customs = existing.filter((p) => !p.template);
