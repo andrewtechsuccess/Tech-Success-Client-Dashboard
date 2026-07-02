@@ -47,6 +47,7 @@ export const api = {
   updateClient: (id, c) => req('PUT', `/clients/${id}`, c),
   deleteClient: (id) => req('DELETE', `/clients/${id}`),
   addNote: (id, text) => req('POST', `/clients/${id}/notes`, { text }),
+  deleteNote: (id, noteId) => req('DELETE', `/clients/${id}/notes/${noteId}`),
   catalog: () => req('GET', '/catalog'),
   setCatalog: (products) => req('PUT', '/catalog', { products })
 };

@@ -62,6 +62,17 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
     }
   };
 
+  const deleteNote = async (note) => {
+    const preview = note.text.length > 60 ? `${note.text.slice(0, 60)}…` : note.text;
+    if (!window.confirm(`Delete this note?\n\n“${preview}”`)) return;
+    try {
+      await api.deleteNote(client.id, note.id);
+      await reload();
+    } catch (e) {
+      alert(`Could not delete note: ${e.message}`);
+    }
+  };
+
   return (
     <>
       <div className="modal-backdrop" onClick={onClose} />
@@ -152,6 +163,9 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
             <div className="note-list">
               {notes.map((n) => (
                 <div className="note-item" key={n.id}>
+                  <button className="icon-btn note-del" title="Delete note" onClick={() => deleteNote(n)}>
+                    ✕
+                  </button>
                   <div className="note-text">{n.text}</div>
                   <div className="note-meta muted sm">{fmtDate(n.createdAt)}</div>
                 </div>

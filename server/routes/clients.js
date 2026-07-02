@@ -166,6 +166,20 @@ router.post('/:id/notes', async (req, res) => {
   res.status(201).json(client);
 });
 
+// Delete a single note from the client's note log.
+router.delete('/:id/notes/:noteId', async (req, res) => {
+  const clients = await getClients();
+  const client = clients.find((c) => c.id === req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  const log = Array.isArray(client.noteLog) ? client.noteLog : [];
+  const idx = log.findIndex((n) => n.id === req.params.noteId);
+  if (idx < 0) return res.status(404).json({ error: 'Note not found' });
+  log.splice(idx, 1);
+  client.noteLog = log;
+  await writeJson(CLIENTS_PATH, clients);
+  res.json(client);
+});
+
 router.delete('/:id', async (req, res) => {
   const clients = await getClients();
   const idx = clients.findIndex((c) => c.id === req.params.id);

@@ -3,7 +3,6 @@ import { useData } from '../data.jsx';
 import { api } from '../api.js';
 import {
   clientHealth,
-  summarize,
   externalHref,
   visibleProducts,
   sentimentInfo,
@@ -22,12 +21,23 @@ import {
 import ClientDetailDrawer from '../components/ClientDetailDrawer.jsx';
 import ClientExpanded from '../components/ClientExpanded.jsx';
 
-function Stat({ n, label, tone = '' }) {
+// Metric tile. With onClick it renders as a button (used as the view
+// navigation at the top of the dashboard); `on` marks the active view.
+function Stat({ n, label, tone = '', on = false, onClick }) {
+  const cls = `dash-stat${tone ? ` ${tone}` : ''}${on ? ' on' : ''}`;
+  if (!onClick) {
+    return (
+      <div className={cls}>
+        <div className="ds-num">{n}</div>
+        <div className="ds-label">{label}</div>
+      </div>
+    );
+  }
   return (
-    <div className={`dash-stat${tone ? ` ${tone}` : ''}`}>
+    <button type="button" className={cls} onClick={onClick} aria-pressed={on}>
       <div className="ds-num">{n}</div>
       <div className="ds-label">{label}</div>
-    </div>
+    </button>
   );
 }
 
@@ -759,11 +769,70 @@ function InsightsView({ clients }) {
   );
 }
 
+// Compact A–Z table of all clients — a dense scanning layout alternative to
+// the grouped board columns.
+function ClientTable({ clients, onOpen, onEdit }) {
+  const rows = [...clients].sort((a, b) => a.name.localeCompare(b.name));
+  return (
+    <div className="card no-pad">
+      <table className="hist">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Account manager</th>
+            <th>Plan</th>
+            <th>Sentiment</th>
+            <th>Health</th>
+            <th>Products</th>
+            <th>Open projects</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c) => {
+            const prods = visibleProducts(c);
+            const done = prods.filter((p) => p.status === 'complete').length;
+            const open = (c.projects || []).filter((p) => p.status !== 'completed').length;
+            const h = clientHealth(c);
+            return (
+              <tr key={c.id}>
+                <td>
+                  <button className="link-cell" onClick={() => onOpen(c.id)}>
+                    {c.name}
+                  </button>
+                  {c.code && <span className="code">{c.code}</span>}
+                </td>
+                <td className="muted">{c.accountManager || '—'}</td>
+                <td>{c.planStatus ? <span className="plan-pill">{c.planStatus}</span> : <span className="muted">—</span>}</td>
+                <td>
+                  <SentimentDots value={c.sentiment} />
+                </td>
+                <td>
+                  <span className={`health-dot ${h.level}`} title={h.label} />
+                </td>
+                <td className="muted">
+                  {done}/{prods.length} complete
+                </td>
+                <td className="muted">{open || '—'}</td>
+                <td className="row-actions">
+                  <button className="cc-edit" title="Edit client" onClick={() => onEdit(c.id)}>
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { clients, reload } = useData();
   const [view, setView] = useState('board'); // 'board' | 'projects'
   const [filter, setFilter] = useState('');
-  const [groupBy, setGroupBy] = useState('am'); // 'am' | 'health'
+  const [groupBy, setGroupBy] = useState('am'); // 'am' | 'pm' | 'health' | 'plan' | 'sentiment' | 'table'
   const [viewId, setViewId] = useState(null); // expanded (read) view
   const [editId, setEditId] = useState(null); // edit drawer
   const [quickMenu, setQuickMenu] = useState(null); // inline status menu: { kind, client, item, rect }
@@ -786,25 +855,58 @@ export default function Dashboard() {
     });
   }, [clients, q]);
 
-  const stats = useMemo(() => summarize(filtered), [filtered]);
+  // Headline metric per section for the clickable nav tiles: total clients
+  // (Board), open projects (Projects), at-risk clients (At risk), and overall
+  // standard-product rollout completion (Insights).
+  const navMetrics = useMemo(() => {
+    let openProjects = 0, atRisk = 0, applicable = 0, complete = 0;
+    for (const c of clients) {
+      if (sentimentInfo(c.sentiment).value <= 2) atRisk++;
+      for (const p of c.projects || []) if (p.status !== 'completed') openProjects++;
+      for (const p of c.products || []) {
+        if (!p.template || p.status === 'not_needed') continue;
+        applicable++;
+        if (p.status === 'complete') complete++;
+      }
+    }
+    return {
+      clients: clients.length,
+      openProjects,
+      atRisk,
+      rolloutPct: applicable ? Math.round((complete / applicable) * 100) : 0
+    };
+  }, [clients]);
 
   const columns = useMemo(() => {
+    if (groupBy === 'table') return [];
     const groups = new Map();
-    const keyFor = (c) =>
-      groupBy === 'health'
-        ? clientHealth(c).label
-        : (c.accountManager || '').trim() || UNASSIGNED;
-    for (const c of filtered) {
-      const k = keyFor(c);
+    const add = (k, c) => {
       if (!groups.has(k)) groups.set(k, []);
       groups.get(k).push(c);
+    };
+    for (const c of filtered) {
+      if (groupBy === 'health') add(clientHealth(c).label, c);
+      else if (groupBy === 'plan') add(PLAN_STATUSES.includes(c.planStatus) ? c.planStatus : 'No plan', c);
+      else if (groupBy === 'sentiment') add(riskTier(c.sentiment).label, c);
+      else if (groupBy === 'pm') {
+        // A client appears under every PM who owns one of its projects.
+        const owners = new Set((c.projects || []).map((p) => (p.owner || '').trim()).filter(Boolean));
+        if (owners.size === 0) add(UNASSIGNED, c);
+        else for (const o of owners) add(o, c);
+      } else add((c.accountManager || '').trim() || UNASSIGNED, c);
     }
-    // Named groups alphabetical; "Unassigned" always sorts last.
-    const keys = [...groups.keys()].sort((a, b) => {
-      if (a === UNASSIGNED) return 1;
-      if (b === UNASSIGNED) return -1;
-      return a.localeCompare(b);
-    });
+    // Plan + sentiment use a fixed logical order; name-based groups sort
+    // alphabetically with "Unassigned" last.
+    let keys;
+    if (groupBy === 'plan') keys = [...PLAN_STATUSES, 'No plan'].filter((k) => groups.has(k));
+    else if (groupBy === 'sentiment') keys = ['At risk', 'Watch', 'Healthy'].filter((k) => groups.has(k));
+    else {
+      keys = [...groups.keys()].sort((a, b) => {
+        if (a === UNASSIGNED) return 1;
+        if (b === UNASSIGNED) return -1;
+        return a.localeCompare(b);
+      });
+    }
     return keys.map((k) => ({ key: k, clients: groups.get(k) }));
   }, [filtered, groupBy]);
 
@@ -860,30 +962,33 @@ export default function Dashboard() {
         <div className="muted sm">Track products, projects and issues across all clients.</div>
       </div>
 
-      <div className="view-tabs">
-        <button className={`tab${view === 'board' ? ' on' : ''}`} onClick={() => setView('board')}>
-          Board
-        </button>
-        <button className={`tab${view === 'projects' ? ' on' : ''}`} onClick={() => setView('projects')}>
-          Projects
-        </button>
-        <button className={`tab${view === 'risk' ? ' on' : ''}`} onClick={() => setView('risk')}>
-          At risk
-        </button>
-        <button className={`tab${view === 'insights' ? ' on' : ''}`} onClick={() => setView('insights')}>
-          Insights
-        </button>
+      <div className="dash-summary nav-summary">
+        <Stat n={navMetrics.clients} label="Clients · Board" on={view === 'board'} onClick={() => setView('board')} />
+        <Stat
+          n={navMetrics.openProjects}
+          label="Open projects"
+          tone={navMetrics.openProjects ? 'blue' : ''}
+          on={view === 'projects'}
+          onClick={() => setView('projects')}
+        />
+        <Stat
+          n={navMetrics.atRisk}
+          label="At risk"
+          tone={navMetrics.atRisk ? 'red' : 'green'}
+          on={view === 'risk'}
+          onClick={() => setView('risk')}
+        />
+        <Stat
+          n={`${navMetrics.rolloutPct}%`}
+          label="Rollout · Insights"
+          tone={navMetrics.rolloutPct >= 75 ? 'green' : navMetrics.rolloutPct >= 40 ? 'amber' : ''}
+          on={view === 'insights'}
+          onClick={() => setView('insights')}
+        />
       </div>
 
       {view === 'board' && (
         <>
-          <div className="dash-summary">
-        <Stat n={stats.clients} label="Clients" />
-        <Stat n={stats.planning} label="Planning" tone={stats.planning ? 'blue' : ''} />
-        <Stat n={stats.inProgress} label="In progress" tone={stats.inProgress ? 'amber' : ''} />
-        <Stat n={stats.complete} label="Complete" tone={stats.complete ? 'green' : ''} />
-      </div>
-
       <div className="dash-controls">
         <input
           className="dash-filter"
@@ -891,14 +996,19 @@ export default function Dashboard() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        <div className="seg">
-          <button className={`seg-btn${groupBy === 'am' ? ' on' : ''}`} onClick={() => setGroupBy('am')}>
-            By account manager
-          </button>
-          <button className={`seg-btn${groupBy === 'health' ? ' on' : ''}`} onClick={() => setGroupBy('health')}>
-            By health
-          </button>
-        </div>
+        <select
+          className="filter-select"
+          value={groupBy}
+          onChange={(e) => setGroupBy(e.target.value)}
+          title="Group / layout"
+        >
+          <option value="am">By account manager</option>
+          <option value="pm">By project manager</option>
+          <option value="health">By health</option>
+          <option value="plan">By plan status</option>
+          <option value="sentiment">By sentiment</option>
+          <option value="table">A–Z table</option>
+        </select>
       </div>
 
       {clients.length === 0 ? (
@@ -907,6 +1017,14 @@ export default function Dashboard() {
             No clients yet — add one under <b>Clients</b>.
           </div>
         </div>
+      ) : groupBy === 'table' ? (
+        filtered.length === 0 ? (
+          <div className="card">
+            <div className="muted">No clients match “{filter}”.</div>
+          </div>
+        ) : (
+          <ClientTable clients={filtered} onOpen={setViewId} onEdit={setEditId} />
+        )
       ) : columns.length === 0 ? (
         <div className="card">
           <div className="muted">No clients match “{filter}”.</div>

@@ -938,6 +938,29 @@ textarea {
   color: var(--accent-2);
 }
 
+/* Clickable nav tiles (replace the old view tabs) */
+button.dash-stat {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, transform 0.08s;
+}
+button.dash-stat:hover {
+  border-color: var(--accent);
+}
+button.dash-stat:active {
+  transform: translateY(1px);
+}
+.dash-stat.on {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.dash-stat.on .ds-label {
+  color: var(--text);
+}
+
 .dash-controls {
   display: flex;
   align-items: center;
@@ -1795,10 +1818,25 @@ input[type='range'].range {
   gap: 8px;
 }
 .note-item {
+  position: relative;
   border: 1px solid var(--border);
   background: var(--bg-2);
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 8px 34px 8px 10px; /* room for the delete button */
+}
+.note-del {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1;
+}
+.note-del:hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 .note-text {
   font-size: 13px;
