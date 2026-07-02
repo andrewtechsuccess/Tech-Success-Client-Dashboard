@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.0",
+  "id": "${ENTRA_CLIENT_ID}",
+  "developer": {
+    "name": "Tech Success",
+    "websiteUrl": "https://${APP_DOMAIN}",
+    "privacyUrl": "https://${APP_DOMAIN}/privacy",
+    "termsOfUseUrl": "https://${APP_DOMAIN}/terms"
+  },
+  "name": {
+    "short": "Client Dashboard",
+    "full": "Tech Success — Client Dashboard"
+  },
+  "description": {
+    "short": "Track products, projects and issues across all clients.",
+    "full": "Tech Success Client Dashboard — an internal MSP client / products / projects tracker, signed in with your Microsoft 365 account."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0B1220",
+  "staticTabs": [
+    {
+      "entityId": "clientDashboard",
+      "name": "Dashboard",
+      "contentUrl": "https://${APP_DOMAIN}/",
+      "websiteUrl": "https://${APP_DOMAIN}/",
+      "scopes": ["personal"]
+    }
+  ],
+  "permissions": ["identity"],
+  "validDomains": ["${APP_DOMAIN}"],
+  "webApplicationInfo": {
+    "id": "${ENTRA_CLIENT_ID}",
+    "resource": "${APP_ID_URI}"
+  }
+}

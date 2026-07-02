@@ -6,6 +6,8 @@ client/dist/
 
 # runtime data & secrets — NEVER commit (client records, password hash, JWT secret)
 data/
+.env
+.env.local
 
 # logs / misc
 *.log
