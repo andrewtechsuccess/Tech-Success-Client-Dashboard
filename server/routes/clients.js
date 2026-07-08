@@ -63,6 +63,19 @@ function normProducts(arr) {
     .filter((p) => p.name);
 }
 
+// Checklist tasks on a project (Planner-style). Blank rows are dropped.
+function normTasks(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((t) => ({
+      id: t?.id || randomUUID(),
+      text: str(t?.text),
+      done: !!t?.done,
+      createdAt: t?.createdAt || new Date().toISOString()
+    }))
+    .filter((t) => t.text);
+}
+
 // Normalize a projects/issues array (Planner-style work items).
 function normProjects(arr) {
   if (!Array.isArray(arr)) return [];
@@ -77,7 +90,8 @@ function normProjects(arr) {
       owner: str(p?.owner),
       due: str(p?.due),
       connectwiseLink: normUrl(p?.connectwiseLink),
-      notes: str(p?.notes)
+      notes: str(p?.notes),
+      tasks: normTasks(p?.tasks)
     }))
     .filter((p) => p.title);
 }

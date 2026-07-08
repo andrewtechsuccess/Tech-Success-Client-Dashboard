@@ -15,11 +15,13 @@ import {
   PROJECT_SCOPE_LABEL,
   projectScope,
   PRIORITY_LABEL,
+  PRIORITIES,
   PLAN_STATUSES,
   UNASSIGNED
 } from '../dashboard.js';
 import ClientDetailDrawer from '../components/ClientDetailDrawer.jsx';
 import ClientExpanded from '../components/ClientExpanded.jsx';
+import ProjectModal from '../components/ProjectModal.jsx';
 
 // Metric tile. With onClick it renders as a button (used as the view
 // navigation at the top of the dashboard); `on` marks the active view.
@@ -185,12 +187,18 @@ function ClientCard({ client, onOpen, onEdit, onProductMenu, onProjectMenu }) {
   );
 }
 
-// A single draggable project card used in the kanban layout.
-function KanbanCard({ row, onOpen, onEdit, onDragStart, onDragEnd, dragging }) {
+// A single draggable project card used in the kanban layout. Clicking the card
+// (anywhere except its buttons/links) opens the Planner-style project modal.
+function KanbanCard({ row, onOpen, onEdit, onOpenProject, onDragStart, onDragEnd, dragging }) {
   return (
     <div
       className={`kan-card${dragging ? ' dragging' : ''}`}
       draggable
+      title="Open project"
+      onClick={(e) => {
+        if (e.target.closest('a, button')) return; // inner actions keep their own behaviour
+        onOpenProject(row);
+      }}
       onDragStart={(e) => onDragStart(e, row)}
       onDragEnd={onDragEnd}
     >
@@ -218,6 +226,11 @@ function KanbanCard({ row, onOpen, onEdit, onDragStart, onDragEnd, dragging }) {
       </div>
       <div className="kan-meta">
         {row.priority && <span className={`prio-pill ${row.priority}`}>{PRIORITY_LABEL[row.priority]}</span>}
+        {(row.tasks || []).length > 0 && (
+          <span className="kan-tasks" title="Tasks done">
+            ☑ {(row.tasks || []).filter((t) => t.done).length}/{(row.tasks || []).length}
+          </span>
+        )}
         {row.connectwiseLink && (
           <a
             className="cw-btn"
@@ -249,11 +262,12 @@ function KanbanCard({ row, onOpen, onEdit, onDragStart, onDragEnd, dragging }) {
 // Projects view: every project/issue across all clients, shown either as a
 // kanban board (a column per pipeline status, drag cards to change status) or
 // as a flat table. Filterable by project manager + free-text search.
-function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onMove }) {
+function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProject, onMove }) {
   const q = filter.trim().toLowerCase();
   const [layout, setLayout] = useState('board'); // 'board' (kanban) | 'table'
   const [owner, setOwner] = useState('all'); // 'all' | 'none' | <name>
   const [scope, setScope] = useState('all'); // 'all' | 'in_scope' | 'extra'
+  const [prio, setPrio] = useState('all'); // 'all' | <priority>
   const [status, setStatus] = useState('open'); // table only: 'open' | 'all' | <status>
   const [drag, setDrag] = useState(null); // { clientId, projectId, status }
   const [overCol, setOverCol] = useState(null); // status column being hovered
@@ -272,10 +286,11 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onMove }) {
     let r = out;
     if (owner !== 'all') r = r.filter((x) => (x.owner || '').trim() === (owner === 'none' ? '' : owner));
     if (scope !== 'all') r = r.filter((x) => projectScope(x) === scope);
+    if (prio !== 'all') r = r.filter((x) => (x.priority || 'medium') === prio);
     if (q) r = r.filter((x) => `${x.clientName} ${x.clientCode} ${x.accountManager} ${x.owner || ''} ${x.title}`.toLowerCase().includes(q));
     r.sort((a, b) => a.clientName.localeCompare(b.clientName) || a.title.localeCompare(b.title));
     return r;
-  }, [clients, q, owner, scope]);
+  }, [clients, q, owner, scope, prio]);
 
   // Table rows additionally honour the status dropdown.
   const tableRows = useMemo(() => {
@@ -350,6 +365,14 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onMove }) {
             </option>
           ))}
         </select>
+        <select className="filter-select" value={prio} onChange={(e) => setPrio(e.target.value)}>
+          <option value="all">All priorities</option>
+          {PRIORITIES.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
         <div className="muted sm">
           {rows.length} {rows.length === 1 ? 'item' : 'items'} · {clientCount} client{clientCount === 1 ? '' : 's'}
         </div>
@@ -389,6 +412,7 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onMove }) {
                         row={r}
                         onOpen={onOpen}
                         onEdit={onEdit}
+                        onOpenProject={onOpenProject}
                         onDragStart={onDragStart}
                         onDragEnd={() => {
                           setDrag(null);
@@ -433,7 +457,9 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onMove }) {
                     {r.clientCode && <span className="code">{r.clientCode}</span>}
                   </td>
                   <td>
-                    {r.title}
+                    <button className="link-cell" onClick={() => onOpenProject(r)} title="Open project">
+                      {r.title}
+                    </button>
                     {r.type === 'issue' && <span className="proj-tag">issue</span>}
                   </td>
                   <td>
@@ -836,6 +862,7 @@ export default function Dashboard() {
   const [viewId, setViewId] = useState(null); // expanded (read) view
   const [editId, setEditId] = useState(null); // edit drawer
   const [quickMenu, setQuickMenu] = useState(null); // inline status menu: { kind, client, item, rect }
+  const [projRef, setProjRef] = useState(null); // Planner-style project modal: { clientId, projectId }
 
   const q = filter.trim().toLowerCase();
 
@@ -912,6 +939,10 @@ export default function Dashboard() {
 
   const viewClient = clients.find((c) => c.id === viewId) || null;
   const editClient = clients.find((c) => c.id === editId) || null;
+  // Resolve the project modal against live data so it survives reloads (and
+  // closes itself if the project was deleted elsewhere).
+  const projClient = projRef ? clients.find((c) => c.id === projRef.clientId) || null : null;
+  const projItem = projClient ? (projClient.projects || []).find((p) => p.id === projRef.projectId) || null : null;
 
   // Move a project to a new pipeline status (kanban drag-drop). Persists the
   // owning client's whole projects array, then refreshes from the server.
@@ -1066,6 +1097,7 @@ export default function Dashboard() {
           setFilter={setFilter}
           onOpen={setViewId}
           onEdit={setEditId}
+          onOpenProject={(row) => setProjRef({ clientId: row.clientId, projectId: row.id })}
           onMove={moveProject}
         />
       )}
@@ -1089,6 +1121,22 @@ export default function Dashboard() {
       {editClient && <ClientDetailDrawer client={editClient} onClose={() => setEditId(null)} />}
 
       {quickMenu && <QuickMenu menu={quickMenu} onSelect={onQuickSelect} onClose={() => setQuickMenu(null)} />}
+
+      {projClient && projItem && (
+        <ProjectModal
+          client={projClient}
+          project={projItem}
+          onClose={() => setProjRef(null)}
+          onOpenClient={(cid) => {
+            setProjRef(null);
+            setViewId(cid);
+          }}
+          onEdit={(cid) => {
+            setProjRef(null);
+            setEditId(cid);
+          }}
+        />
+      )}
     </div>
   );
 }
