@@ -16,6 +16,18 @@ const APP_ID_URI = process.env.ENTRA_APP_ID_URI || '';
 
 export const entraEnabled = () => Boolean(TENANT_ID && CLIENT_ID);
 
+// Public (non-secret) identifiers the SPA needs to run its own sign-in.
+// Served via /api/auth/config so the frontend needs no build-time env.
+export const entraPublicConfig = () =>
+  entraEnabled()
+    ? {
+        tenantId: TENANT_ID,
+        clientId: CLIENT_ID,
+        appIdUri: APP_ID_URI || `api://${CLIENT_ID}`,
+        scope: `${APP_ID_URI || `api://${CLIENT_ID}`}/access_as_user`
+      }
+    : null;
+
 // v2.0 issuer for a single tenant.
 const ISSUER = `https://login.microsoftonline.com/${TENANT_ID}/v2.0`;
 

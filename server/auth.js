@@ -9,7 +9,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getConfig } from './config.js';
-import { entraEnabled, verifyEntraToken, userFromClaims } from './entra.js';
+import { entraEnabled, entraPublicConfig, verifyEntraToken, userFromClaims } from './entra.js';
 
 export const authRouter = express.Router();
 
@@ -61,9 +61,11 @@ authRouter.post('/login', (req, res) => {
 });
 
 // Tells the frontend which sign-in methods are available so it can show the
-// right UI (Microsoft button, password box, or both).
+// right UI (Microsoft button, password box, or both). entraConfig carries the
+// PUBLIC identifiers (tenant/client id) the SPA needs to run MSAL/Teams SSO —
+// these are not secrets, so exposing them unauthenticated is fine.
 authRouter.get('/config', (req, res) => {
-  res.json({ entra: entraEnabled(), passwordLogin: passwordLoginEnabled() });
+  res.json({ entra: entraEnabled(), passwordLogin: passwordLoginEnabled(), entraConfig: entraPublicConfig() });
 });
 
 // Returns the current signed-in user (after requireAuth populates req.user).

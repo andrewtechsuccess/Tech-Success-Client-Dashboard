@@ -1,5 +1,35 @@
 # Deployment runbook — Teams + Microsoft 365 SSO on Azure App Service
 
+## ⚡ Quick path (scripted)
+
+Almost everything below is automated by `scripts/deploy-azure.ps1`. Your part:
+
+```powershell
+az login                                   # sign in as an Azure/directory admin
+./scripts/deploy-azure.ps1 -AppName <globally-unique-name>
+```
+
+The script registers the Entra app (SPA redirects, App ID URI, access_as_user
+scope, pre-authorized Teams clients, v2 tokens, Graph permissions + admin
+consent), creates the resource group / B1 Linux plan / web app, builds and
+zip-deploys the app, copies `data/*.json` to persistent `/home/data`, and
+produces `teams/client-dashboard-teams.zip`. Then you only:
+
+1. Open `https://<AppName>.azurewebsites.net` and confirm sign-in works.
+2. Upload the Teams zip in **Teams Admin Center → Manage apps → Upload new app**
+   and publish it to the org.
+3. Later, disable the shared password:
+   `az webapp config appsettings set -n <AppName> -g rg-client-dashboard --settings DISABLE_PASSWORD_LOGIN=1`
+
+Uses the `<AppName>.azurewebsites.net` domain (valid HTTPS, accepted by Teams),
+so no DNS/custom-domain work is required. Re-run the script any time to
+redeploy — server data is not overwritten unless you pass `-ForceData`.
+
+The manual reference below covers the same ground step by step (useful if the
+script hits a policy restriction in your tenant, e.g. on identifier URIs).
+
+---
+
 This guides you from the current localhost app to an internal app published in
 Microsoft Teams, signed in with Microsoft 365 (Entra ID). It runs as one Azure
 App Service serving both the API and the built SPA from the same origin.
@@ -142,9 +172,11 @@ the org app catalogue via Teams Admin Center.
 - **Teams manifest** template — `teams/manifest.json`.
 - **Env var contract** — `.env.example`.
 
-## Still to wire (next step)
+## Frontend SSO (done)
 
-- **Frontend SSO:** add `@microsoft/teams-js` + MSAL so the SPA gets a token via
-  Teams SSO (inside Teams) or an interactive Microsoft login (in a browser), and
-  sends it as the Bearer token. This needs the client ID from step 1, which is
-  why it follows the registration.
+The SPA signs in via `client/src/entra-auth.js`: silent Teams SSO inside Teams
+(`getAuthToken`), MSAL silent/popup in a browser. It reads the public Entra
+identifiers from `GET /api/auth/config` at runtime — no build-time variables.
+The login screen shows a "Sign in with Microsoft 365" button when Entra is
+configured, with the admin password as a fallback until
+`DISABLE_PASSWORD_LOGIN=1` is set.

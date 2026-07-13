@@ -1655,6 +1655,12 @@ button.prod-pill.quick:hover {
 }
 
 /* At-risk view */
+.login-alt {
+  font-size: 13px;
+  align-self: center;
+  margin-top: 2px;
+}
+
 .risk-pill {
   font-size: 13px;
   font-weight: 600;

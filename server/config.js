@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const ROOT = path.resolve(__dirname, '..');
-export const DATA_DIR = path.join(ROOT, 'data');
+// On Azure App Service set DATA_DIR=/home/data so client data lives outside
+// wwwroot and survives redeploys. Defaults to <repo>/data for local use.
+export const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 export const CLIENT_DIST = path.join(ROOT, 'client', 'dist');
 
 export const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
