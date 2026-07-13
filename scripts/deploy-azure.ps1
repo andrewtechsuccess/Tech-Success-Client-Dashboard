@@ -137,7 +137,7 @@ if (-not (& $az appservice plan show --name "$AppName-plan" --resource-group $Re
   & $az appservice plan create --name "$AppName-plan" --resource-group $ResourceGroup --location $Location --is-linux --sku $Sku --output none
 }
 if (-not (& $az webapp show --name $AppName --resource-group $ResourceGroup 2>$null)) {
-  & $az webapp create --name $AppName --resource-group $ResourceGroup --plan "$AppName-plan" --runtime 'NODE:20-lts' --output none
+  & $az webapp create --name $AppName --resource-group $ResourceGroup --plan "$AppName-plan" --runtime 'NODE:22-lts' --output none
 }
 & $az webapp config set --name $AppName --resource-group $ResourceGroup --startup-file 'node server/index.js' --output none
 
@@ -177,16 +177,16 @@ Step 'Deploying to App Service (this can take a few minutes)'
 Step 'Uploading client data to /home/data'
 $dataDir = Join-Path $repo 'data'
 if (Test-Path $dataDir) {
-  $creds = & $az webapp deployment list-publishing-credentials --name $AppName --resource-group $ResourceGroup | ConvertFrom-Json
-  $pair = "$($creds.publishingUserName):$($creds.publishingPassword)"
-  $auth = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($pair))
+  # Kudu basic auth is disabled by default on new apps — use an Entra bearer token.
+  $tok = (& $az account get-access-token --resource 'https://management.core.windows.net/' -o json | ConvertFrom-Json).accessToken
+  $H = @{ Authorization = "Bearer $tok" }
   $kudu = "https://$AppName.scm.azurewebsites.net/api/vfs"
-  try { Invoke-RestMethod -Method PUT -Uri "$kudu/data/" -Headers @{ Authorization = $auth } | Out-Null } catch {} # ensure dir
+  try { Invoke-RestMethod -Method PUT -Uri "$kudu/data/" -Headers $H | Out-Null } catch {} # ensure dir (409 = exists)
   foreach ($f in Get-ChildItem $dataDir -Filter *.json) {
     $exists = $true
-    try { Invoke-RestMethod -Method HEAD -Uri "$kudu/data/$($f.Name)" -Headers @{ Authorization = $auth } | Out-Null } catch { $exists = $false }
+    try { Invoke-RestMethod -Method HEAD -Uri "$kudu/data/$($f.Name)" -Headers $H | Out-Null } catch { $exists = $false }
     if ($exists -and -not $ForceData) { Write-Host "  $($f.Name) already on server — skipped (use -ForceData to overwrite)"; continue }
-    Invoke-RestMethod -Method PUT -Uri "$kudu/data/$($f.Name)" -Headers @{ Authorization = $auth; 'If-Match' = '*' } -InFile $f.FullName | Out-Null
+    Invoke-RestMethod -Method PUT -Uri "$kudu/data/$($f.Name)" -Headers ($H + @{ 'If-Match' = '*' }) -InFile $f.FullName | Out-Null
     Write-Host "  uploaded $($f.Name)"
   }
 } else {
