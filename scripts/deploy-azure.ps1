@@ -60,6 +60,11 @@ if (-not $SkipEntra) {
     $appId = $existing.appId; $objectId = $existing.id
   } else {
     $created = & $az ad app create --display-name $displayName --sign-in-audience AzureADMyOrg | ConvertFrom-Json
+    if (-not $created -or -not $created.appId) {
+      throw ("Could not create the app registration — the signed-in account lacks directory rights. " +
+             "Sign in (az login) with an account that has the Global Administrator, Application Administrator, " +
+             "or Cloud Application Administrator role, then re-run.")
+    }
     $appId = $created.appId; $objectId = $created.id
     Write-Host "Created registration $appId"
   }
