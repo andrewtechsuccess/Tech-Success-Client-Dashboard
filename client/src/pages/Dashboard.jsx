@@ -22,6 +22,7 @@ import {
 import ClientDetailDrawer from '../components/ClientDetailDrawer.jsx';
 import ClientExpanded from '../components/ClientExpanded.jsx';
 import ProjectModal from '../components/ProjectModal.jsx';
+import StickyHScroll from '../components/StickyHScroll.jsx';
 
 // Metric tile. With onClick it renders as a button (used as the view
 // navigation at the top of the dashboard); `on` marks the active view.
@@ -384,7 +385,7 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
             <div className="muted">No projects match the current filters.</div>
           </div>
         ) : (
-          <div className="board kan-board">
+          <StickyHScroll className="board kan-board">
             {PROJECT_STATUSES.map((s) => {
               const colRows = byStatus.get(s.value) || [];
               return (
@@ -425,7 +426,7 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
                 </div>
               );
             })}
-          </div>
+          </StickyHScroll>
         )
       ) : tableRows.length === 0 ? (
         <div className="card">
@@ -1067,7 +1068,7 @@ export default function Dashboard() {
           <div className="muted">No clients match “{filter}”.</div>
         </div>
       ) : (
-        <div className="board">
+        <StickyHScroll className="board">
           {columns.map((col) => (
             <div className="board-col" key={col.key}>
               <div className="board-col-head">
@@ -1091,7 +1092,7 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
-        </div>
+        </StickyHScroll>
       )}
         </>
       )}

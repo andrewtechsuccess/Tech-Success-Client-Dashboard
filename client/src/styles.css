@@ -1731,6 +1731,21 @@ button.prod-pill.quick:hover {
   padding: 16px 18px 18px;
 }
 
+/* Sticky proxy horizontal scrollbar for wide boards */
+.hscroll-bar {
+  position: sticky;
+  bottom: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 14px;
+  margin-top: -14px; /* overlays the board's own padding-bottom */
+  z-index: 5;
+  background: var(--bg);
+}
+.hscroll-bar.off {
+  display: none;
+}
+
 /* Transient error toast (replaces alert — blocked inside Teams) */
 .toast {
   position: fixed;
