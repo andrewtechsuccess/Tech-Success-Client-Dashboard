@@ -1432,7 +1432,8 @@ button.dash-stat:active {
 /* Product pills become clickable buttons (keep the pill look). */
 button.prod-pill {
   cursor: pointer;
-  font: inherit;
+  font-family: inherit;
+  font-size: 13px; /* match the span pills (font: inherit reset this to 16px) */
   line-height: inherit;
 }
 button.prod-pill.quick:hover {
