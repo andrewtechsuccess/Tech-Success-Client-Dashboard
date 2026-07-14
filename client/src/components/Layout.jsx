@@ -19,8 +19,8 @@ export default function Layout({ children }) {
           <Link className={active('/')} to="/">
             Dashboard
           </Link>
-          <Link className={active('/clients')} to="/clients">
-            Clients
+          <Link className={active('/settings')} to="/settings">
+            Settings
           </Link>
           <button className="btn ghost sm" onClick={logout}>
             Log out

@@ -1661,6 +1661,55 @@ button.prod-pill.quick:hover {
   margin-top: 2px;
 }
 
+/* Settings: standard-product catalog editor */
+.settings-card {
+  max-width: 640px;
+}
+.catalog-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+.catalog-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--border);
+}
+.catalog-row:last-child {
+  border-bottom: none;
+}
+.catalog-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.catalog-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1;
+}
+.catalog-btn.del:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.ok-msg {
+  color: var(--ok);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.settings-card .actions {
+  margin-top: 14px;
+}
+.settings-card .task-add {
+  max-width: 420px;
+}
+
 .risk-pill {
   font-size: 13px;
   font-weight: 600;

@@ -41,12 +41,7 @@ export default function Clients() {
   };
 
   return (
-    <div className="page">
-      <div className="exec-head">
-        <h2>Clients</h2>
-      </div>
-
-      <div className="two-col">
+    <div className="two-col">
         <form className="card" onSubmit={submit}>
           <h3>{editing ? 'Edit client' : 'Add client'}</h3>
           <div className="field">
@@ -116,7 +111,6 @@ export default function Clients() {
             {clients.length === 0 && <div className="muted">No clients yet — add your first one.</div>}
           </div>
         </div>
-      </div>
     </div>
   );
 }

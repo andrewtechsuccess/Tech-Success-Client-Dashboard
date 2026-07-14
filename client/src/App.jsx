@@ -5,7 +5,7 @@ import { DataProvider } from './data.jsx';
 import Layout from './components/Layout.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import Clients from './pages/Clients.jsx';
+import Settings from './pages/Settings.jsx';
 
 function Shell() {
   const { token } = useAuth();
@@ -15,7 +15,8 @@ function Shell() {
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/clients" element={<Clients />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/clients" element={<Navigate to="/settings" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
