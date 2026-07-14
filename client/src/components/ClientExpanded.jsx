@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { useData } from '../data.jsx';
+import ConfirmDialog from './ConfirmDialog.jsx';
 import {
   visibleProducts,
   sentimentInfo,
@@ -36,6 +37,8 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
   const { reload } = useData();
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const [confirmNote, setConfirmNote] = useState(null); // note pending deletion
 
   useEffect(() => {
     const onKey = (e) => {
@@ -62,14 +65,16 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
     }
   };
 
-  const deleteNote = async (note) => {
-    const preview = note.text.length > 60 ? `${note.text.slice(0, 60)}…` : note.text;
-    if (!window.confirm(`Delete this note?\n\n“${preview}”`)) return;
+  // Deletion confirms via an in-app dialog (window.confirm is blocked in Teams).
+  const reallyDeleteNote = async () => {
+    const note = confirmNote;
+    setConfirmNote(null);
+    setErr('');
     try {
       await api.deleteNote(client.id, note.id);
       await reload();
     } catch (e) {
-      alert(`Could not delete note: ${e.message}`);
+      setErr(`Could not delete note: ${e.message}`);
     }
   };
 
@@ -153,6 +158,7 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
           )}
 
           <h4 className="ev-h">Notes</h4>
+          {err && <div className="error">{err}</div>}
           <div className="note-add">
             <textarea placeholder="Add a note…" value={text} onChange={(e) => setText(e.target.value)} />
             <button className="btn primary sm" onClick={addNote} disabled={saving || !text.trim()}>
@@ -163,7 +169,7 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
             <div className="note-list">
               {notes.map((n) => (
                 <div className="note-item" key={n.id}>
-                  <button className="icon-btn note-del" title="Delete note" onClick={() => deleteNote(n)}>
+                  <button className="icon-btn note-del" title="Delete note" onClick={() => setConfirmNote(n)}>
                     ✕
                   </button>
                   <div className="note-text">{n.text}</div>
@@ -176,6 +182,17 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
           )}
         </div>
       </div>
+
+      {confirmNote && (
+        <ConfirmDialog
+          title="Delete this note?"
+          message={`“${confirmNote.text.length > 80 ? `${confirmNote.text.slice(0, 80)}…` : confirmNote.text}”`}
+          confirmLabel="Delete note"
+          danger
+          onConfirm={reallyDeleteNote}
+          onCancel={() => setConfirmNote(null)}
+        />
+      )}
     </>
   );
 }

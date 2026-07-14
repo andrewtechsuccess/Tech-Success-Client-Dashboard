@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../api.js';
 import { useData } from '../data.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b'];
 const BLANK = { name: '', code: '', notes: '', color: '#3b82f6' };
@@ -10,6 +11,7 @@ export default function Clients() {
   const [form, setForm] = useState(BLANK);
   const [editing, setEditing] = useState(null);
   const [err, setErr] = useState('');
+  const [confirmDel, setConfirmDel] = useState(null); // client pending deletion
 
   const submit = async (e) => {
     e.preventDefault();
@@ -33,11 +35,18 @@ export default function Clients() {
     setEditing(null);
     setForm(BLANK);
   };
-  const del = async (c) => {
-    if (!window.confirm(`Delete client "${c.name}"? Its scripts on disk are kept.`)) return;
-    await api.deleteClient(c.id);
-    if (editing === c.id) cancel();
-    await reload();
+  // Deletion confirms via an in-app dialog (window.confirm is blocked in Teams).
+  const del = (c) => setConfirmDel(c);
+  const reallyDel = async () => {
+    const c = confirmDel;
+    setConfirmDel(null);
+    try {
+      await api.deleteClient(c.id);
+      if (editing === c.id) cancel();
+      await reload();
+    } catch (e) {
+      setErr(e.message);
+    }
   };
 
   return (
@@ -111,6 +120,17 @@ export default function Clients() {
             {clients.length === 0 && <div className="muted">No clients yet — add your first one.</div>}
           </div>
         </div>
+
+      {confirmDel && (
+        <ConfirmDialog
+          title={`Delete “${confirmDel.name}”?`}
+          message="The client and all of its products, projects and notes will be removed. This cannot be undone."
+          confirmLabel="Delete client"
+          danger
+          onConfirm={reallyDel}
+          onCancel={() => setConfirmDel(null)}
+        />
+      )}
     </div>
   );
 }

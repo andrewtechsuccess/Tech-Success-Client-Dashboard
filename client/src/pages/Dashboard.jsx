@@ -863,6 +863,12 @@ export default function Dashboard() {
   const [editId, setEditId] = useState(null); // edit drawer
   const [quickMenu, setQuickMenu] = useState(null); // inline status menu: { kind, client, item, rect }
   const [projRef, setProjRef] = useState(null); // Planner-style project modal: { clientId, projectId }
+  const [toast, setToast] = useState(''); // transient error banner (alert() is blocked inside Teams)
+
+  const showError = (m) => {
+    setToast(m);
+    setTimeout(() => setToast(''), 6000);
+  };
 
   const q = filter.trim().toLowerCase();
 
@@ -954,7 +960,7 @@ export default function Dashboard() {
       await api.updateClient(clientId, { projects });
       await reload();
     } catch (err) {
-      alert(`Could not move project: ${err.message}`);
+      showError(`Could not move project: ${err.message}`);
     }
   };
 
@@ -967,7 +973,7 @@ export default function Dashboard() {
       await api.updateClient(clientId, { products });
       await reload();
     } catch (err) {
-      alert(`Could not update product: ${err.message}`);
+      showError(`Could not update product: ${err.message}`);
     }
   };
 
@@ -1121,6 +1127,8 @@ export default function Dashboard() {
       {editClient && <ClientDetailDrawer client={editClient} onClose={() => setEditId(null)} />}
 
       {quickMenu && <QuickMenu menu={quickMenu} onSelect={onQuickSelect} onClose={() => setQuickMenu(null)} />}
+
+      {toast && <div className="toast">{toast}</div>}
 
       {projClient && projItem && (
         <ProjectModal

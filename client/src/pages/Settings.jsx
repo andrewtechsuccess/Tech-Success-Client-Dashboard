@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { useData } from '../data.jsx';
 import Clients from './Clients.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 // Editor for the global standard-product catalog. Saving re-applies the list
 // to EVERY client: existing per-client statuses are kept (matched by name),
@@ -14,6 +15,7 @@ function CatalogEditor() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [confirmRemove, setConfirmRemove] = useState(null); // { list, removed }
 
   useEffect(() => {
     (async () => {
@@ -55,22 +57,15 @@ function CatalogEditor() {
     setNames(copy);
   };
 
-  const save = async () => {
-    const removed = (saved || []).filter((n) => !names.includes(n));
-    if (
-      removed.length &&
-      !window.confirm(
-        `Remove ${removed.map((r) => `“${r}”`).join(', ')} from EVERY client?\n\nEach client's rollout status for ${removed.length === 1 ? 'this product' : 'these products'} will be lost. This cannot be undone.`
-      )
-    )
-      return;
+  const doSave = async (list) => {
     setBusy(true);
     setErr('');
     setMsg('');
     try {
-      const res = await api.setCatalog(names);
+      const res = await api.setCatalog(list);
       setSaved(res.products);
       setNames(res.products);
+      setText('');
       await reload();
       setMsg(`Saved — applied to ${res.clientsUpdated} client${res.clientsUpdated === 1 ? '' : 's'}.`);
     } catch (e) {
@@ -78,6 +73,26 @@ function CatalogEditor() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const save = () => {
+    // Anything still sitting in the add box counts as an add — people type a
+    // name and go straight for Save.
+    let list = names;
+    const pending = text.trim();
+    if (pending) {
+      if (names.some((n) => n.toLowerCase() === pending.toLowerCase())) {
+        setErr(`“${pending}” is already in the list.`);
+        return;
+      }
+      list = [...names, pending];
+    }
+    const removed = (saved || []).filter((n) => !list.includes(n));
+    if (removed.length) {
+      setConfirmRemove({ list, removed }); // in-app dialog (window.confirm is blocked inside Teams)
+      return;
+    }
+    doSave(list);
   };
 
   if (saved === null) return <div className="muted">Loading catalog…</div>;
@@ -139,7 +154,7 @@ function CatalogEditor() {
       {msg && <div className="ok-msg">{msg}</div>}
 
       <div className="actions">
-        <button className="btn primary" onClick={save} disabled={busy || !dirty}>
+        <button className="btn primary" onClick={save} disabled={busy || (!dirty && !text.trim())}>
           {busy ? 'Applying to all clients…' : 'Save & apply to all clients'}
         </button>
         {dirty && (
@@ -157,6 +172,21 @@ function CatalogEditor() {
           </button>
         )}
       </div>
+
+      {confirmRemove && (
+        <ConfirmDialog
+          title="Remove from every client?"
+          message={`${confirmRemove.removed.map((r) => `“${r}”`).join(', ')} will be removed from all clients, and each client's rollout status for ${confirmRemove.removed.length === 1 ? 'it' : 'them'} will be lost. This cannot be undone.`}
+          confirmLabel="Remove & apply"
+          danger
+          onConfirm={() => {
+            const list = confirmRemove.list;
+            setConfirmRemove(null);
+            doSave(list);
+          }}
+          onCancel={() => setConfirmRemove(null)}
+        />
+      )}
     </div>
   );
 }

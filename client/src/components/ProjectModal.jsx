@@ -17,6 +17,7 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
   const { reload } = useData();
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
   useEffect(() => {
     const onKey = (e) => {
@@ -33,12 +34,13 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
   // Persist a new tasks array onto this project (the server normalizes).
   const persistTasks = async (nextTasks) => {
     setBusy(true);
+    setErr('');
     try {
       const projects = (client.projects || []).map((p) => (p.id === project.id ? { ...p, tasks: nextTasks } : p));
       await api.updateClient(client.id, { projects });
       await reload();
     } catch (e) {
-      alert(`Could not update tasks: ${e.message}`);
+      setErr(`Could not update tasks: ${e.message}`);
     } finally {
       setBusy(false);
     }
@@ -136,6 +138,7 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
             <div className="muted sm">No tasks yet — add the steps to get this done.</div>
           )}
 
+          {err && <div className="error">{err}</div>}
           <div className="task-add">
             <input
               placeholder="Add a task…"

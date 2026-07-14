@@ -1703,6 +1703,50 @@ button.prod-pill.quick:hover {
   font-size: 13px;
   margin-top: 8px;
 }
+
+/* In-app confirm dialog (replaces window.confirm — blocked inside Teams) */
+.confirm-backdrop {
+  z-index: 70;
+}
+.confirm-dialog {
+  width: 430px;
+  z-index: 71;
+}
+.confirm-body {
+  padding: 18px 18px 4px;
+}
+.confirm-body h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.confirm-msg {
+  color: var(--text-dim);
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 18px 18px;
+}
+
+/* Transient error toast (replaces alert — blocked inside Teams) */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  z-index: 90;
+  box-shadow: var(--shadow);
+  max-width: 90vw;
+}
 .settings-card .actions {
   margin-top: 14px;
 }
