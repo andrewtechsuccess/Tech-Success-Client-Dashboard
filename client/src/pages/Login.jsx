@@ -112,12 +112,6 @@ export default function Login() {
         )}
 
         {err && <div className="error">{err}</div>}
-
-        {!entra && cfg && (
-          <div className="hint">
-            Default password is <code>admin</code>. Change it with <code>node setup.js</code>.
-          </div>
-        )}
       </form>
     </div>
   );
