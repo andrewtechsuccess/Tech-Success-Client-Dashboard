@@ -175,6 +175,9 @@ function ClientBacklog({ client, meta }) {
         <span className="bl-count muted sm">
           {overall.done}/{overall.total} tasks
         </span>
+        <Link className="btn ghost sm" to={`/roadmap/${client.id}`}>
+          Roadmap
+        </Link>
       </div>
       {err && <div className="error">{err}</div>}
 

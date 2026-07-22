@@ -2503,3 +2503,101 @@ button.bl-pill.quick:hover {
   border-color: var(--accent);
   color: var(--accent-2);
 }
+
+/* ---------- Roadmap report ---------- */
+.rm-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.rm-sum.danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+.rm-idx-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.rm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rm-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.rm-item.overdue {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.rm-date {
+  font-size: 13px;
+  font-weight: 600;
+  width: 92px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.rm-kind {
+  flex-shrink: 0;
+}
+.rm-title {
+  flex: 1;
+  min-width: 160px;
+  overflow-wrap: anywhere;
+}
+.rm-rel {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.rm-rel.danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+.rm-group h3.danger {
+  color: var(--danger);
+}
+.rm-printonly {
+  display: none;
+}
+
+/* Print: light palette, hide chrome, keep the report content. */
+@media print {
+  :root[data-theme='dark'],
+  :root {
+    --bg: #ffffff;
+    --bg-2: #ffffff;
+    --panel: #ffffff;
+    --panel-2: #f3f4f6;
+    --border: #d1d5db;
+    --text: #111827;
+    --text-dim: #374151;
+    --muted: #6b7280;
+    --shadow: none;
+  }
+  body {
+    background: #fff !important;
+  }
+  .topbar,
+  .rm-noprint,
+  .bl-search {
+    display: none !important;
+  }
+  .rm-printonly {
+    display: inline;
+  }
+  .rm-page .card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}

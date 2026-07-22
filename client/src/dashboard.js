@@ -138,6 +138,58 @@ export function backlogProgress(client, templates, catalogOrder) {
   return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
 }
 
+// Parse a stored due string into a Date at local midnight. Due dates are
+// YYYY-MM-DD from the date inputs, but older project rows may hold free text —
+// fall back to Date parsing and return null for anything unparseable.
+export function parseDue(s) {
+  const t = (s || '').trim();
+  if (!t) return null;
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(t) ? new Date(`${t}T00:00:00`) : new Date(t);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+// Roadmap items for a client: every dated, not-yet-completed backlog task and
+// project/issue, sorted soonest first, plus counts of open items with no date.
+export function clientRoadmap(client, templates, catalogOrder) {
+  const items = [];
+  let undatedTasks = 0;
+  let undatedProjects = 0;
+  for (const name of catalogOrder) {
+    const tasks = templates[name] || [];
+    if (!tasks.length) continue;
+    const prod = (client.products || []).find((p) => p.template && p.name === name);
+    if (prod && prod.status === 'not_needed') continue;
+    for (const t of tasks) {
+      const st = clientBacklogTask(client, name, t);
+      if (st.status === 'completed') continue;
+      const date = parseDue(st.due);
+      if (!date) {
+        undatedTasks++;
+        continue;
+      }
+      items.push({ kind: 'task', date, title: t.title, product: name, status: st.status, who: st.engineer });
+    }
+  }
+  for (const p of client.projects || []) {
+    if (p.status === 'completed') continue;
+    const date = parseDue(p.due);
+    if (!date) {
+      undatedProjects++;
+      continue;
+    }
+    items.push({
+      kind: p.type === 'issue' ? 'issue' : 'project',
+      date,
+      title: p.title,
+      status: p.status,
+      who: p.owner,
+      priority: p.priority
+    });
+  }
+  items.sort((a, b) => a.date - b.date);
+  return { items, undatedTasks, undatedProjects };
+}
+
 // Distinct account-manager names across clients (for the editor's datalist and grouping).
 export function accountManagers(clients) {
   const set = new Set();

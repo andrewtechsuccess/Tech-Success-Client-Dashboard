@@ -23,6 +23,9 @@ export default function Layout({ children }) {
           <Link className={active('/backlog')} to="/backlog">
             Backlog
           </Link>
+          <Link className={active('/roadmap')} to="/roadmap">
+            Roadmap
+          </Link>
           <Link className={active('/settings')} to="/settings">
             Settings
           </Link>
