@@ -6,6 +6,7 @@ import { getConfig, ensureDirs, CLIENT_DIST } from './config.js';
 import { authRouter, requireAuth } from './auth.js';
 import clientsRouter from './routes/clients.js';
 import catalogRouter from './routes/catalog.js';
+import connectwiseRouter from './routes/connectwise.js';
 
 ensureDirs();
 getConfig(); // triggers first-run init + the default-password warning
@@ -17,6 +18,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRouter);
 app.use('/api/clients', requireAuth, clientsRouter);
 app.use('/api/catalog', requireAuth, catalogRouter);
+app.use('/api/connectwise', requireAuth, connectwiseRouter);
 
 // Serve the built SPA if it exists (production / standalone install).
 if (fs.existsSync(CLIENT_DIST)) {
