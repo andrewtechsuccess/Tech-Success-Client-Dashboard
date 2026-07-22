@@ -16,6 +16,7 @@ export const CLIENT_DIST = path.join(ROOT, 'client', 'dist');
 export const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 export const CLIENTS_PATH = path.join(DATA_DIR, 'clients.json');
 export const CATALOG_PATH = path.join(DATA_DIR, 'catalog.json');
+export const BACKLOG_PATH = path.join(DATA_DIR, 'backlog.json');
 
 export const DEFAULT_SETTINGS = { theme: 'dark' };
 export const DEFAULT_PASSWORD = 'admin';

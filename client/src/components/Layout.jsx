@@ -6,7 +6,8 @@ import BrandLogo from './BrandLogo.jsx';
 export default function Layout({ children }) {
   const { logout } = useAuth();
   const { pathname } = useLocation();
-  const active = (p) => (pathname === p ? 'topnav on' : 'topnav');
+  // Prefix match so /backlog/:clientId keeps the Backlog tab lit.
+  const active = (p) => (p === '/' ? pathname === p : pathname === p || pathname.startsWith(`${p}/`)) ? 'topnav on' : 'topnav';
 
   return (
     <div className="app">
@@ -18,6 +19,9 @@ export default function Layout({ children }) {
           <div className="spacer" />
           <Link className={active('/')} to="/">
             Dashboard
+          </Link>
+          <Link className={active('/backlog')} to="/backlog">
+            Backlog
           </Link>
           <Link className={active('/settings')} to="/settings">
             Settings

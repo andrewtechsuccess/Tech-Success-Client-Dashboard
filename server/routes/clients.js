@@ -6,6 +6,7 @@ import { readJson, writeJson } from '../store.js';
 import { CLIENTS_PATH } from '../config.js';
 import { slugify } from '../util.js';
 import { PRODUCT_STATUSES, readCatalog, applyCatalogToClient } from '../catalog.js';
+import { BACKLOG_TASK_STATUSES } from '../backlog.js';
 
 const router = express.Router();
 
@@ -162,6 +163,31 @@ router.put('/:id', async (req, res) => {
   if (products !== undefined) client.products = normProducts(products);
   if (projects !== undefined) client.projects = normProjects(projects);
   if (noteLog !== undefined) client.noteLog = normNoteLog(noteLog);
+  await writeJson(CLIENTS_PATH, clients);
+  res.json(client);
+});
+
+// Merge-patch one implementation-backlog task's per-client state. Body:
+// { product, taskId, status?, engineer?, due? }. State is keyed by the template
+// task id so template retitles don't lose progress; unknown statuses coerce to
+// the default so a bad payload can't poison the page.
+router.put('/:id/backlog', async (req, res) => {
+  const product = str(req.body?.product);
+  const taskId = str(req.body?.taskId);
+  if (!product || !taskId) return res.status(400).json({ error: 'product and taskId are required' });
+
+  const clients = await getClients();
+  const client = clients.find((c) => c.id === req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  if (!client.backlog || typeof client.backlog !== 'object' || Array.isArray(client.backlog)) client.backlog = {};
+  if (!client.backlog[product] || typeof client.backlog[product] !== 'object') client.backlog[product] = {};
+  const cur = client.backlog[product][taskId] || { status: 'not_completed', engineer: '', due: '' };
+  if (req.body.status !== undefined) cur.status = BACKLOG_TASK_STATUSES.has(req.body.status) ? req.body.status : 'not_completed';
+  if (req.body.engineer !== undefined) cur.engineer = str(req.body.engineer);
+  if (req.body.due !== undefined) cur.due = str(req.body.due);
+  client.backlog[product][taskId] = cur;
+
   await writeJson(CLIENTS_PATH, clients);
   res.json(client);
 });

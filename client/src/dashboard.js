@@ -52,7 +52,17 @@ export const CLIENT_LINKS = [
   { key: 'itBoostLink', label: 'IT Boost' }
 ];
 
+// Implementation-backlog task status (per client, per product, per task).
+// Values mirror server/backlog.js.
+export const BACKLOG_STATUSES = [
+  { value: 'not_completed', label: 'Not completed', cls: 'not_completed' },
+  { value: 'scheduled', label: 'Scheduled', cls: 'scheduled' },
+  { value: 'in_progress', label: 'In progress', cls: 'in_progress' },
+  { value: 'completed', label: 'Completed', cls: 'completed' }
+];
+
 const labelMap = (arr) => Object.fromEntries(arr.map((o) => [o.value, o.label]));
+export const BACKLOG_STATUS_LABEL = labelMap(BACKLOG_STATUSES);
 export const PRODUCT_STATUS_LABEL = labelMap(PRODUCT_STATUSES);
 export const PROJECT_STATUS_LABEL = labelMap(PROJECT_STATUSES);
 export const PROJECT_SCOPE_LABEL = labelMap(PROJECT_SCOPES);
@@ -96,6 +106,36 @@ export function summarize(clients) {
     }
   }
   return { clients: clients.length, planning, inProgress, complete };
+}
+
+// A client's saved state for one backlog task, with defaults for tasks the
+// client has never touched (templates merge in at render time, so new template
+// tasks appear on every client automatically).
+export function clientBacklogTask(client, productName, task) {
+  const st = client?.backlog?.[productName]?.[task.id];
+  return {
+    status: BACKLOG_STATUS_LABEL[st?.status] ? st.status : 'not_completed',
+    engineer: st?.engineer || '',
+    due: st?.due || ''
+  };
+}
+
+// Backlog progress for one client across all template products, skipping
+// products this client has marked "not needed".
+export function backlogProgress(client, templates, catalogOrder) {
+  let done = 0;
+  let total = 0;
+  for (const name of catalogOrder) {
+    const tasks = templates[name] || [];
+    if (!tasks.length) continue;
+    const prod = (client.products || []).find((p) => p.template && p.name === name);
+    if (prod && prod.status === 'not_needed') continue;
+    for (const t of tasks) {
+      total++;
+      if (clientBacklogTask(client, name, t).status === 'completed') done++;
+    }
+  }
+  return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
 }
 
 // Distinct account-manager names across clients (for the editor's datalist and grouping).

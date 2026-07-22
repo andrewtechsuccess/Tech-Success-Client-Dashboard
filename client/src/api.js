@@ -49,5 +49,9 @@ export const api = {
   addNote: (id, text) => req('POST', `/clients/${id}/notes`, { text }),
   deleteNote: (id, noteId) => req('DELETE', `/clients/${id}/notes/${noteId}`),
   catalog: () => req('GET', '/catalog'),
-  setCatalog: (products) => req('PUT', '/catalog', { products })
+  setCatalog: (products) => req('PUT', '/catalog', { products }),
+  backlog: () => req('GET', '/backlog'),
+  setBacklogTemplates: (templates) => req('PUT', '/backlog/templates', { templates }),
+  setBacklogEngineers: (engineers) => req('PUT', '/backlog/engineers', { engineers }),
+  setBacklogTask: (id, patch) => req('PUT', `/clients/${id}/backlog`, patch)
 };

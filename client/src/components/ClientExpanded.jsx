@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { useData } from '../data.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
@@ -89,6 +90,9 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
             {client.planStatus && <span className="plan-pill">{client.planStatus}</span>}
           </div>
           <Sentiment value={client.sentiment} />
+          <Link className="btn ghost sm" to={`/backlog/${client.id}`} onClick={onClose}>
+            Backlog
+          </Link>
           <button className="btn ghost sm" onClick={onEdit}>
             Edit
           </button>

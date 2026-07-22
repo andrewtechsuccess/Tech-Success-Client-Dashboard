@@ -2325,3 +2325,181 @@ input[type='range'].range {
 .script-link.indent {
   margin-left: 10px;
 }
+
+/* ---------- Implementation backlog ---------- */
+.bl-search {
+  max-width: 340px;
+  margin-bottom: 12px;
+}
+.bl-client-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bl-client-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text);
+}
+.bl-client-row:hover {
+  border-color: var(--accent);
+}
+.bl-cname {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bl-client-row .bl-bar {
+  margin-left: auto;
+}
+.bl-bar {
+  width: 180px;
+  max-width: 30vw;
+  height: 8px;
+  flex-shrink: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bl-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+.bl-bar-fill.full {
+  background: var(--ok);
+}
+.bl-count {
+  flex-shrink: 0;
+  min-width: 44px;
+  text-align: right;
+}
+.bl-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bl-head h2 {
+  margin: 0;
+}
+.bl-head .swatch {
+  width: 14px;
+  height: 14px;
+}
+.bl-section {
+  margin-bottom: 14px;
+}
+.bl-sec-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.bl-sec-head h3 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bl-sec-head .bl-bar {
+  margin-left: auto;
+}
+
+/* Backlog task rows: status pill + title + engineer + due date + CW button. */
+.bl-task {
+  flex-wrap: wrap;
+}
+.bl-pill {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: inherit;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 116px;
+  text-align: center;
+}
+button.bl-pill {
+  cursor: pointer;
+}
+button.bl-pill.quick:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.bl-pill.not_completed {
+  color: var(--muted);
+}
+.bl-pill.scheduled {
+  color: var(--accent-2);
+  background: rgba(129, 140, 248, 0.14);
+  border-color: rgba(129, 140, 248, 0.4);
+}
+.bl-pill.in_progress {
+  color: var(--warn);
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.bl-pill.completed {
+  color: var(--ok);
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+.bl-task .task-text {
+  flex: 1;
+  min-width: 160px;
+}
+.bl-task.done .task-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.bl-task select.bl-eng {
+  width: 160px;
+  flex-shrink: 0;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+.bl-task input.bl-due {
+  width: 150px;
+  flex-shrink: 0;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+.bl-cw {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Per-product task-template editor in Settings. */
+.cat-tasks {
+  margin: 2px 0 10px 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  background: var(--bg-2);
+  border-radius: 10px;
+}
+.cat-tasks .task-add {
+  margin-top: 8px;
+}
+.cat-tasks-btn {
+  white-space: nowrap;
+}
+.cat-tasks-btn.on {
+  border-color: var(--accent);
+  color: var(--accent-2);
+}
