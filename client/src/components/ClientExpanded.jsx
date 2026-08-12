@@ -131,7 +131,11 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
                     {projectScope(j) === 'extra' && <span className="scope-tag extra">Extra</span>}
                   </span>
                   {j.owner && <span className="muted sm nowrap">{j.owner}</span>}
-                  {j.due && <span className="muted sm nowrap" title="Due date">{j.due}</span>}
+                  {j.end && (
+                    <span className="muted sm nowrap" title={j.start ? `Runs ${j.start} → ${j.end}` : 'End date'}>
+                      {j.end}
+                    </span>
+                  )}
                   {j.connectwiseLink && (
                     <a className="cw-btn" href={externalHref(j.connectwiseLink)} target="_blank" rel="noopener noreferrer" title="Open ConnectWise project">
                       ↗

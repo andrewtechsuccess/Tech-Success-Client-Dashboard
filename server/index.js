@@ -8,9 +8,11 @@ import clientsRouter from './routes/clients.js';
 import catalogRouter from './routes/catalog.js';
 import connectwiseRouter from './routes/connectwise.js';
 import backlogRouter from './routes/backlog.js';
+import { runMigrations } from './migrate.js';
 
 ensureDirs();
 getConfig(); // triggers first-run init + the default-password warning
+await runMigrations(); // before any request can read the data
 
 const app = express();
 app.use(express.json({ limit: '4mb' }));

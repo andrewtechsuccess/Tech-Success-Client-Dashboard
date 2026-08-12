@@ -17,11 +17,13 @@ import {
   PRIORITY_LABEL,
   PRIORITIES,
   PLAN_STATUSES,
-  UNASSIGNED
+  UNASSIGNED,
+  isOverdue
 } from '../dashboard.js';
 import ClientDetailDrawer from '../components/ClientDetailDrawer.jsx';
 import ClientExpanded from '../components/ClientExpanded.jsx';
 import ProjectModal from '../components/ProjectModal.jsx';
+import GanttChart from '../components/GanttChart.jsx';
 import StickyHScroll from '../components/StickyHScroll.jsx';
 
 // Metric tile. With onClick it renders as a button (used as the view
@@ -251,25 +253,27 @@ function KanbanCard({ row, onOpen, onEdit, onOpenProject, onDragStart, onDragEnd
           <span className="kf-label">PM</span>
           <span className={`kf-val${row.owner ? '' : ' muted'}`}>{row.owner || '—'}</span>
         </span>
-        <span className="kan-field" title="Due date">
-          <span className="kf-label">Due</span>
-          <span className={`kf-val${row.due ? '' : ' muted'}`}>{row.due || '—'}</span>
+        <span className="kan-field" title={row.start ? `Runs ${row.start} → ${row.end || '?'}` : 'End date'}>
+          <span className="kf-label">End</span>
+          <span className={`kf-val${row.end ? '' : ' muted'}${isOverdue(row) ? ' overdue-cell' : ''}`}>
+            {row.end || '—'}
+          </span>
         </span>
       </div>
     </div>
   );
 }
 
-// Projects view: every project/issue across all clients, shown either as a
-// kanban board (a column per pipeline status, drag cards to change status) or
-// as a flat table. Filterable by project manager + free-text search.
+// Projects view: every project/issue across all clients, shown as a kanban
+// board (a column per pipeline status, drag cards to change status), a flat
+// table, or a Gantt timeline. All three share the same filters.
 function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProject, onMove }) {
   const q = filter.trim().toLowerCase();
-  const [layout, setLayout] = useState('board'); // 'board' (kanban) | 'table'
+  const [layout, setLayout] = useState('board'); // 'board' (kanban) | 'table' | 'gantt'
   const [owner, setOwner] = useState('all'); // 'all' | 'none' | <name>
   const [scope, setScope] = useState('all'); // 'all' | 'in_scope' | 'extra'
   const [prio, setPrio] = useState('all'); // 'all' | <priority>
-  const [status, setStatus] = useState('open'); // table only: 'open' | 'all' | <status>
+  const [status, setStatus] = useState('open'); // table + gantt: 'open' | 'all' | <status>
   const [drag, setDrag] = useState(null); // { clientId, projectId, status }
   const [overCol, setOverCol] = useState(null); // status column being hovered
 
@@ -293,8 +297,9 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
     return r;
   }, [clients, q, owner, scope, prio]);
 
-  // Table rows additionally honour the status dropdown.
-  const tableRows = useMemo(() => {
+  // Table + Gantt additionally honour the status dropdown. (The board can't:
+  // it *is* the status axis.)
+  const statusRows = useMemo(() => {
     if (status === 'all') return rows;
     if (status === 'open') return rows.filter((r) => r.status !== 'completed');
     return rows.filter((r) => r.status === status);
@@ -307,7 +312,9 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
     return m;
   }, [rows]);
 
-  const clientCount = new Set(rows.map((r) => r.clientId)).size;
+  // What the current layout actually renders — the counts follow it.
+  const shown = layout === 'board' ? rows : statusRows;
+  const clientCount = new Set(shown.map((r) => r.clientId)).size;
 
   const onDragStart = (e, row) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -337,8 +344,11 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
           <button className={`seg-btn${layout === 'table' ? ' on' : ''}`} onClick={() => setLayout('table')}>
             Table
           </button>
+          <button className={`seg-btn${layout === 'gantt' ? ' on' : ''}`} onClick={() => setLayout('gantt')}>
+            Gantt
+          </button>
         </div>
-        {layout === 'table' && (
+        {layout !== 'board' && (
           <select className="filter-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="open">Open (not completed)</option>
             <option value="all">All statuses</option>
@@ -375,7 +385,7 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
           ))}
         </select>
         <div className="muted sm">
-          {rows.length} {rows.length === 1 ? 'item' : 'items'} · {clientCount} client{clientCount === 1 ? '' : 's'}
+          {shown.length} {shown.length === 1 ? 'item' : 'items'} · {clientCount} client{clientCount === 1 ? '' : 's'}
         </div>
       </div>
 
@@ -428,7 +438,9 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
             })}
           </StickyHScroll>
         )
-      ) : tableRows.length === 0 ? (
+      ) : layout === 'gantt' ? (
+        <GanttChart rows={statusRows} onOpenProject={onOpenProject} onOpenClient={onOpen} />
+      ) : statusRows.length === 0 ? (
         <div className="card">
           <div className="muted">No projects match the current filters.</div>
         </div>
@@ -443,13 +455,14 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
                 <th>Project manager</th>
                 <th>Status</th>
                 <th>Priority</th>
-                <th>Due</th>
+                <th>Start</th>
+                <th>End</th>
                 <th>Account manager</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {tableRows.map((r) => (
+              {statusRows.map((r) => (
                 <tr key={`${r.clientId}/${r.id}`}>
                   <td>
                     <button className="link-cell" onClick={() => onOpen(r.clientId)}>
@@ -471,7 +484,8 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
                     <span className={`proj-status ${r.status}`}>{PROJECT_STATUS_LABEL[r.status]}</span>
                   </td>
                   <td className="muted">{PRIORITY_LABEL[r.priority] || '—'}</td>
-                  <td className="muted">{r.due || '—'}</td>
+                  <td className="muted">{r.start || '—'}</td>
+                  <td className={isOverdue(r) ? 'overdue-cell' : 'muted'}>{r.end || '—'}</td>
                   <td className="muted">{r.accountManager || '—'}</td>
                   <td className="row-actions">
                     {r.connectwiseLink && (

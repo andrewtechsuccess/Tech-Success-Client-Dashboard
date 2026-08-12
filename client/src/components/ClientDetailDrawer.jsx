@@ -26,7 +26,8 @@ const newProject = () => ({
   status: 'opportunity',
   priority: 'medium',
   owner: '',
-  due: '',
+  start: '',
+  end: '',
   connectwiseLink: '',
   notes: ''
 });
@@ -264,8 +265,15 @@ export default function ClientDetailDrawer({ client, onClose }) {
                   </select>
                   <input
                     type="date"
-                    value={j.due}
-                    onChange={(e) => setProject(j.id, { due: e.target.value })}
+                    title="Start date"
+                    value={j.start || ''}
+                    onChange={(e) => setProject(j.id, { start: e.target.value })}
+                  />
+                  <input
+                    type="date"
+                    title="End date"
+                    value={j.end || ''}
+                    onChange={(e) => setProject(j.id, { end: e.target.value })}
                   />
                 </div>
                 <div className="edit-row">

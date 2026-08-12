@@ -77,7 +77,10 @@ function normTasks(arr) {
     .filter((t) => t.text);
 }
 
-// Normalize a projects/issues array (Planner-style work items).
+// Normalize a projects/issues array (Planner-style work items). `start`/`end`
+// are the scheduled span (both optional) that the Gantt view draws; `end`
+// replaced the older single `due` field, so a payload that still carries `due`
+// is accepted and folded into `end`.
 function normProjects(arr) {
   if (!Array.isArray(arr)) return [];
   return arr
@@ -89,7 +92,8 @@ function normProjects(arr) {
       status: PROJECT_STATUSES.has(p?.status) ? p.status : 'opportunity',
       priority: PRIORITIES.has(p?.priority) ? p.priority : 'medium',
       owner: str(p?.owner),
-      due: str(p?.due),
+      start: str(p?.start),
+      end: str(p?.end !== undefined ? p.end : p?.due),
       connectwiseLink: normUrl(p?.connectwiseLink),
       notes: str(p?.notes),
       tasks: normTasks(p?.tasks)

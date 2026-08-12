@@ -1523,14 +1523,93 @@ button.prod-pill.quick:hover {
   flex-direction: column;
   gap: 4px;
 }
+/* Flex (not inline-flex) so the inline edit controls can fill the grid cell. */
 .pm-info-val {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  min-height: 22px;
+  min-height: 30px;
+}
+.pm-info-val select,
+.pm-info-val input {
+  flex: 1;
+  min-width: 0;
 }
 .pm-task-count {
   font-weight: 400;
   margin-left: 8px;
+}
+
+/* Inline editing — controls keep the read-only pill/heading look until they're
+   hovered or focused, so the modal still reads as a summary. */
+.pm-head-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pm-title-input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-color: transparent;
+  background: transparent;
+}
+.pm-title-input:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--bg-2);
+}
+.pm-saving {
+  flex-shrink: 0;
+}
+/* Only in edit mode, where the row is a <label> wrapping a real control. */
+label.pm-info-item {
+  cursor: pointer;
+}
+/* Geometry only — the colour still comes from the .proj-status / .prio-pill /
+   .scope-tag class the select also carries. */
+select.pm-sel,
+input.pm-sel {
+  width: 100%;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.pm-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.project-modal input:disabled,
+.project-modal select:disabled,
+.project-modal textarea:disabled {
+  opacity: 0.7;
+}
+.task-item input[type='checkbox'] {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.task-edit {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding: 3px 7px;
+  border-color: transparent;
+  background: transparent;
+}
+.task-edit:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--panel-2);
+}
+.task-item.done .task-edit {
+  text-decoration: line-through;
+  color: var(--muted);
 }
 .task-list {
   display: flex;
@@ -2569,6 +2648,288 @@ button.bl-pill.quick:hover {
 }
 .rm-printonly {
   display: none;
+}
+
+/* ---------- Gantt timeline (Projects → Gantt) ----------
+   One horizontally-scrolling grid. Each row is [sticky label | timeline], and
+   the timeline is a positioning context the bars are placed into by day offset.
+   --tl-w (timeline width in px) is set inline from the computed date range. */
+.gantt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.g-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+}
+.g-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.g-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+}
+
+.gantt-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.gantt {
+  position: relative;
+  width: calc(var(--g-label-w) + var(--tl-w));
+  --g-label-w: 280px;
+  --g-row-h: 32px;
+}
+.g-row,
+.g-head {
+  display: flex;
+  align-items: stretch;
+  min-height: var(--g-row-h);
+}
+.g-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  flex: 0 0 var(--g-label-w);
+  width: var(--g-label-w);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  font-size: 13px;
+  overflow: hidden;
+}
+.g-time {
+  position: relative;
+  flex: 0 0 var(--tl-w);
+  width: var(--tl-w);
+}
+
+/* Header: coarse band over fine ticks. */
+.g-head {
+  position: relative;
+  z-index: 4;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.g-head .g-label,
+.g-head-label {
+  background: var(--panel);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+.g-head .g-time {
+  display: flex;
+  flex-direction: column;
+}
+.g-band {
+  position: relative;
+  height: 24px;
+}
+.g-band-tick {
+  height: 22px;
+  border-top: 1px solid var(--border);
+}
+.g-band-cell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 7px;
+  border-left: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.g-band-tick .g-band-cell {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Grid lines + today marker sit behind every row. */
+.g-underlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--g-label-w);
+  width: var(--tl-w);
+  z-index: 0;
+  pointer-events: none;
+}
+.g-gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  opacity: 0.5;
+}
+.g-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0.85;
+}
+
+.g-row {
+  position: relative;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+}
+.g-row:last-child {
+  border-bottom: none;
+}
+.g-group .g-label {
+  font-weight: 600;
+  background: var(--panel-2);
+}
+.g-group {
+  background: rgba(148, 163, 184, 0.06);
+  min-height: 28px;
+}
+.g-row-label {
+  padding-left: 22px;
+}
+.g-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 0;
+}
+
+/* Bars: absolute by day offset, coloured by pipeline status. */
+.g-bar {
+  position: absolute;
+  top: 5px;
+  height: calc(var(--g-row-h) - 12px);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+}
+.g-bar:hover {
+  filter: brightness(1.2);
+}
+.g-bar.sow {
+  background: rgba(129, 140, 248, 0.28);
+  border-color: rgba(129, 140, 248, 0.65);
+}
+.g-bar.approved {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: rgba(34, 211, 238, 0.6);
+}
+.g-bar.in_progress {
+  background: rgba(245, 158, 11, 0.28);
+  border-color: rgba(245, 158, 11, 0.65);
+}
+.g-bar.completed {
+  background: rgba(34, 197, 94, 0.25);
+  border-color: rgba(34, 197, 94, 0.6);
+}
+.g-bar.overdue {
+  border-color: var(--danger);
+  border-width: 2px;
+}
+/* Task-completion fill inside the bar. */
+.g-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+}
+.g-bar-text {
+  position: relative;
+  white-space: nowrap;
+  color: var(--text);
+  opacity: 0.85;
+}
+
+/* Legend swatches reuse the bar palette. */
+.g-swatch.sow {
+  background: rgba(129, 140, 248, 0.28);
+  border-color: rgba(129, 140, 248, 0.65);
+}
+.g-swatch.approved {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: rgba(34, 211, 238, 0.6);
+}
+.g-swatch.in_progress {
+  background: rgba(245, 158, 11, 0.28);
+  border-color: rgba(245, 158, 11, 0.65);
+}
+.g-swatch.completed {
+  background: rgba(34, 197, 94, 0.25);
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.g-undated {
+  margin-top: 12px;
+}
+.g-undated-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.g-undated-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.g-undated-item:hover {
+  border-color: var(--accent);
+}
+.g-undated-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overdue-cell {
+  color: var(--danger);
 }
 
 /* Print: light palette, hide chrome, keep the report content. */

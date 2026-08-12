@@ -138,7 +138,7 @@ export function backlogProgress(client, templates, catalogOrder) {
   return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
 }
 
-// Parse a stored due string into a Date at local midnight. Due dates are
+// Parse a stored date string into a Date at local midnight. Dates are
 // YYYY-MM-DD from the date inputs, but older project rows may hold free text —
 // fall back to Date parsing and return null for anything unparseable.
 export function parseDue(s) {
@@ -147,6 +147,41 @@ export function parseDue(s) {
   const d = /^\d{4}-\d{2}-\d{2}$/.test(t) ? new Date(`${t}T00:00:00`) : new Date(t);
   return Number.isNaN(d.getTime()) ? null : d;
 }
+
+export const DAY_MS = 86400000;
+
+export function startOfDay(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+export const today = () => startOfDay(new Date());
+export function addDays(d, n) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+// Whole days from a to b. Built on local midnights so DST shifts can't make a
+// day come out as 0.96 and round the wrong way.
+export const diffDays = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY_MS);
+
+// A project's span on the timeline, or null if it has no dates at all. One date
+// alone gives a single-day marker, as does an end that lands before the start.
+export function projectSpan(p) {
+  const s = parseDue(p?.start);
+  const e = parseDue(p?.end);
+  if (!s && !e) return null;
+  const from = s || e;
+  const to = e && e >= from ? e : from;
+  return { from, to, days: diffDays(from, to) + 1 };
+}
+
+// Open and already past its end date.
+export const isOverdue = (p) => {
+  if (p?.status === 'completed') return false;
+  const e = parseDue(p?.end);
+  return !!e && e < today();
+};
 
 // Roadmap items for a client: every dated, not-yet-completed backlog task and
 // project/issue, sorted soonest first, plus counts of open items with no date.
@@ -172,7 +207,7 @@ export function clientRoadmap(client, templates, catalogOrder) {
   }
   for (const p of client.projects || []) {
     if (p.status === 'completed') continue;
-    const date = parseDue(p.due);
+    const date = parseDue(p.end);
     if (!date) {
       undatedProjects++;
       continue;

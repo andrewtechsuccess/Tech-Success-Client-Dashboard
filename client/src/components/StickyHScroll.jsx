@@ -4,8 +4,11 @@ import React, { useEffect, useRef, useState } from 'react';
 // of the viewport. Wide boards are taller than the screen, so their native
 // horizontal scrollbar sits out of sight at the bottom of the page — this
 // keeps one always visible and two-way synced with the real container.
-export default function StickyHScroll({ className = '', children }) {
-  const contentRef = useRef(null);
+// `contentRef` is optional — pass one when the caller also needs to drive the
+// scroll position (the Gantt jumps to today).
+export default function StickyHScroll({ className = '', children, contentRef: externalRef }) {
+  const localRef = useRef(null);
+  const contentRef = externalRef || localRef;
   const barRef = useRef(null);
   const [scrollW, setScrollW] = useState(0);
   const [clientW, setClientW] = useState(0);
