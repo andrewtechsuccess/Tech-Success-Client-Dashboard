@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { useData } from '../data.jsx';
 import {
@@ -33,8 +33,10 @@ const newProject = () => ({
 });
 
 // Slide-over editor for a single client: account manager, products, and
-// projects/issues. Saves the whole arrays via api.updateClient (the server
-// normalizes + assigns ids), then reloads shared data.
+// projects/issues. Edits are collected locally and saved on Save changes — but
+// as a DIFF against the copy this drawer opened with, one request per changed
+// field/row, so untouched fields are never transmitted and can't overwrite
+// what someone else changed while this drawer was open.
 export default function ClientDetailDrawer({ client, onClose }) {
   const { clients, reload } = useData();
   const [am, setAm] = useState(client.accountManager || '');
@@ -46,6 +48,11 @@ export default function ClientDetailDrawer({ client, onClose }) {
   const [projects, setProjects] = useState(() => (client.projects || []).map((p) => ({ ...p })));
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  // The state this drawer opened with. Deliberately NOT the live `client`
+  // prop, which the background refresh updates underneath us: diffing against
+  // a moving baseline would make untouched fields look changed and send them,
+  // overwriting whatever the other person just did.
+  const baseline = useRef(client);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -68,19 +75,59 @@ export default function ClientDetailDrawer({ client, onClose }) {
   const removeProject = (id) => setProjects((js) => js.filter((j) => j.id !== id));
   const addProject = () => setProjects((js) => [...js, newProject()]);
 
+  // Fields whose value differs from what we opened with.
+  const changedFields = (before, after, keys) => {
+    const patch = {};
+    for (const k of keys) if ((after[k] ?? '') !== (before[k] ?? '')) patch[k] = after[k];
+    return patch;
+  };
+
   const save = async () => {
     setSaving(true);
     setErr('');
     try {
-      await api.updateClient(client.id, {
-        accountManager: am,
-        planStatus,
-        sentiment,
-        notes,
-        ...links,
-        products: products.filter((p) => p.name.trim()),
-        projects: projects.filter((p) => p.title.trim())
-      });
+      const original = baseline.current;
+
+      const clientPatch = changedFields(
+        original,
+        { accountManager: am, planStatus, sentiment, notes, ...links },
+        ['accountManager', 'planStatus', 'sentiment', 'notes', ...CLIENT_LINKS.map((l) => l.key)]
+      );
+      if (Object.keys(clientPatch).length) await api.patchClient(client.id, clientPatch);
+
+      // Products: added rows are POSTed, edited rows PATCHed field-by-field,
+      // removed rows DELETEd. Template rows can only change status/note.
+      const beforeProducts = new Map((original.products || []).map((p) => [p.id, p]));
+      for (const p of products) {
+        const was = beforeProducts.get(p.id);
+        if (!was) {
+          if (p.name.trim()) await api.addProduct(client.id, { name: p.name, status: p.status, note: p.note });
+          continue;
+        }
+        const patch = changedFields(was, p, p.template ? ['status', 'note'] : ['name', 'status', 'note']);
+        if (Object.keys(patch).length) await api.patchProduct(client.id, p.id, patch);
+      }
+      const keptProducts = new Set(products.map((p) => p.id));
+      for (const was of beforeProducts.values()) {
+        if (!keptProducts.has(was.id) && !was.template) await api.deleteProduct(client.id, was.id);
+      }
+
+      const PROJECT_KEYS = ['title', 'type', 'scope', 'status', 'priority', 'owner', 'start', 'end', 'connectwiseLink', 'notes'];
+      const beforeProjects = new Map((original.projects || []).map((p) => [p.id, p]));
+      for (const j of projects) {
+        const was = beforeProjects.get(j.id);
+        if (!was) {
+          if (j.title.trim()) await api.addProject(client.id, j);
+          continue;
+        }
+        const patch = changedFields(was, j, PROJECT_KEYS);
+        if (Object.keys(patch).length) await api.patchProject(client.id, j.id, patch);
+      }
+      const keptProjects = new Set(projects.map((p) => p.id));
+      for (const was of beforeProjects.values()) {
+        if (!keptProjects.has(was.id)) await api.deleteProject(client.id, was.id);
+      }
+
       await reload();
       onClose();
     } catch (e) {

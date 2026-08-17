@@ -43,9 +43,27 @@ async function req(method, url, body) {
 export const api = {
   login: (password) => req('POST', '/auth/login', { password }),
   clients: () => req('GET', '/clients'),
+  clientsVersion: () => req('GET', '/clients/version'),
   createClient: (c) => req('POST', '/clients', c),
-  updateClient: (id, c) => req('PUT', `/clients/${id}`, c),
   deleteClient: (id) => req('DELETE', `/clients/${id}`),
+
+  // Field-level edits. Each sends only what changed, so a save can't revert
+  // another user's concurrent work on the same client. All return the updated
+  // client. Prefer these over updateClient.
+  patchClient: (id, patch) => req('PATCH', `/clients/${id}`, patch),
+  addProject: (id, project) => req('POST', `/clients/${id}/projects`, project),
+  patchProject: (id, projectId, patch) => req('PATCH', `/clients/${id}/projects/${projectId}`, patch),
+  deleteProject: (id, projectId) => req('DELETE', `/clients/${id}/projects/${projectId}`),
+  addTask: (id, projectId, text) => req('POST', `/clients/${id}/projects/${projectId}/tasks`, { text }),
+  patchTask: (id, projectId, taskId, patch) =>
+    req('PATCH', `/clients/${id}/projects/${projectId}/tasks/${taskId}`, patch),
+  deleteTask: (id, projectId, taskId) => req('DELETE', `/clients/${id}/projects/${projectId}/tasks/${taskId}`),
+  addProduct: (id, product) => req('POST', `/clients/${id}/products`, product),
+  patchProduct: (id, productId, patch) => req('PATCH', `/clients/${id}/products/${productId}`, patch),
+  deleteProduct: (id, productId) => req('DELETE', `/clients/${id}/products/${productId}`),
+
+  // Legacy whole-record replace — kept for the client-creation flow only.
+  updateClient: (id, c) => req('PUT', `/clients/${id}`, c),
   addNote: (id, text) => req('POST', `/clients/${id}/notes`, { text }),
   deleteNote: (id, noteId) => req('DELETE', `/clients/${id}/notes/${noteId}`),
   catalog: () => req('GET', '/catalog'),

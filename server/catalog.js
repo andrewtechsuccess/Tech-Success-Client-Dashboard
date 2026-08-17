@@ -2,7 +2,7 @@
 // as locked "template" products, each tracked per-client through a rollout
 // status. Stored in data/catalog.json as { products: ["Name", ...] }.
 import { randomUUID } from 'node:crypto';
-import { readJson, writeJson } from './store.js';
+import { readJson, writeJson, mutateJson } from './store.js';
 import { CATALOG_PATH, CLIENTS_PATH } from './config.js';
 
 // Rollout status for a product on a given client. "not_needed" products are
@@ -37,10 +37,12 @@ export function applyCatalogToClient(client, catalog) {
   return client;
 }
 
-// Re-apply the catalog to every client (after the list changes).
+// Re-apply the catalog to every client (after the list changes). Rewrites the
+// whole file, so it runs under the store lock — otherwise a catalog save would
+// discard every edit made while it was in flight.
 export async function reconcileAllClients(catalog) {
-  const clients = await readJson(CLIENTS_PATH, []);
-  for (const c of clients) applyCatalogToClient(c, catalog);
-  await writeJson(CLIENTS_PATH, clients);
-  return clients.length;
+  return mutateJson(CLIENTS_PATH, [], (clients) => {
+    for (const c of clients) applyCatalogToClient(c, catalog);
+    return clients.length;
+  });
 }

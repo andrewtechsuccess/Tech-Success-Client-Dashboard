@@ -35,7 +35,7 @@ function Sentiment({ value }) {
 // Read-only expanded view of a client opened by clicking its card. Adds a
 // timestamped notes log (append-only) and an Edit button into the edit drawer.
 export default function ClientExpanded({ client, onClose, onEdit }) {
-  const { reload } = useData();
+  const { save } = useData();
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -58,8 +58,7 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
     if (!t) return;
     setSaving(true);
     try {
-      await api.addNote(client.id, t);
-      await reload();
+      await save(() => api.addNote(client.id, t));
       setText('');
     } finally {
       setSaving(false);
@@ -72,8 +71,7 @@ export default function ClientExpanded({ client, onClose, onEdit }) {
     setConfirmNote(null);
     setErr('');
     try {
-      await api.deleteNote(client.id, note.id);
-      await reload();
+      await save(() => api.deleteNote(client.id, note.id));
     } catch (e) {
       setErr(`Could not delete note: ${e.message}`);
     }

@@ -129,7 +129,7 @@ function BacklogIndex({ clients, meta }) {
 // Full-page backlog for one client: template tasks grouped by product, each
 // with a per-client status, assigned engineer, and due date.
 function ClientBacklog({ client, meta }) {
-  const { reload } = useData();
+  const { save } = useData();
   const [menu, setMenu] = useState(null); // { product, task, status, rect }
   const [busyKey, setBusyKey] = useState('');
   const [err, setErr] = useState('');
@@ -138,8 +138,7 @@ function ClientBacklog({ client, meta }) {
     setBusyKey(`${product}:${taskId}`);
     setErr('');
     try {
-      await api.setBacklogTask(client.id, { product, taskId, ...patch });
-      await reload();
+      await save(() => api.setBacklogTask(client.id, { product, taskId, ...patch }));
     } catch (e) {
       setErr(e.message);
     } finally {

@@ -870,7 +870,7 @@ function ClientTable({ clients, onOpen, onEdit }) {
 }
 
 export default function Dashboard() {
-  const { clients, reload } = useData();
+  const { clients, save } = useData();
   const [view, setView] = useState('board'); // 'board' | 'projects'
   const [filter, setFilter] = useState('');
   const [groupBy, setGroupBy] = useState('am'); // 'am' | 'pm' | 'health' | 'plan' | 'sentiment' | 'table'
@@ -965,15 +965,11 @@ export default function Dashboard() {
   const projClient = projRef ? clients.find((c) => c.id === projRef.clientId) || null : null;
   const projItem = projClient ? (projClient.projects || []).find((p) => p.id === projRef.projectId) || null : null;
 
-  // Move a project to a new pipeline status (kanban drag-drop). Persists the
-  // owning client's whole projects array, then refreshes from the server.
+  // Move a project to a new pipeline status (kanban drag-drop). Sends just the
+  // status, so it can't revert whatever else changed on this client meanwhile.
   const moveProject = async (clientId, projectId, newStatus) => {
-    const client = clients.find((c) => c.id === clientId);
-    if (!client) return;
-    const projects = (client.projects || []).map((p) => (p.id === projectId ? { ...p, status: newStatus } : p));
     try {
-      await api.updateClient(clientId, { projects });
-      await reload();
+      await save(() => api.patchProject(clientId, projectId, { status: newStatus }));
     } catch (err) {
       showError(`Could not move project: ${err.message}`);
     }
@@ -981,12 +977,8 @@ export default function Dashboard() {
 
   // Inline product status change from a client card.
   const setProductStatus = async (clientId, productId, newStatus) => {
-    const client = clients.find((c) => c.id === clientId);
-    if (!client) return;
-    const products = (client.products || []).map((p) => (p.id === productId ? { ...p, status: newStatus } : p));
     try {
-      await api.updateClient(clientId, { products });
-      await reload();
+      await save(() => api.patchProduct(clientId, productId, { status: newStatus }));
     } catch (err) {
       showError(`Could not update product: ${err.message}`);
     }

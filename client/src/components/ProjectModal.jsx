@@ -23,7 +23,7 @@ import {
 //   edit           — every field becomes an inline control (Edit toggles it).
 // Nothing is batched: dropdowns/dates save on change, text saves on blur.
 export default function ProjectModal({ client, project, onClose, onOpenClient, onEdit }) {
-  const { clients, reload } = useData();
+  const { clients, save } = useData();
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,21 +58,21 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
   const scope = projectScope(project);
   const staff = staffList(clients);
 
-  // Persist a patch onto this project. The server re-normalizes the whole
-  // projects array, so send it intact with just this project changed.
-  const patchProject = async (patch) => {
+  // Send only the fields that changed. Anything not in the patch is left as
+  // the server has it, so this can't revert someone else's concurrent edit.
+  const run = async (fn) => {
     setBusy(true);
     setErr('');
     try {
-      const projects = (client.projects || []).map((p) => (p.id === project.id ? { ...p, ...patch } : p));
-      await api.updateClient(client.id, { projects });
-      await reload();
+      await save(fn);
     } catch (e) {
       setErr(`Could not save: ${e.message}`);
     } finally {
       setBusy(false);
     }
   };
+
+  const patchProject = (patch) => run(() => api.patchProject(client.id, project.id, patch));
 
   const setField = (key) => (e) => patchProject({ [key]: e.target.value });
 
@@ -102,25 +102,25 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
     }
   };
 
-  const persistTasks = (nextTasks) => patchProject({ tasks: nextTasks });
-
+  // Tasks are added, ticked and removed one at a time rather than by replacing
+  // the list, so two people working the same checklist don't undo each other.
   const addTask = async () => {
     const t = text.trim();
     if (!t) return;
     setText('');
-    await persistTasks([...tasks, { text: t, done: false }]);
+    await run(() => api.addTask(client.id, project.id, t));
   };
-  const toggleTask = (task) => persistTasks(tasks.map((t) => (t.id === task.id ? { ...t, done: !t.done } : t)));
-  const removeTask = (task) => persistTasks(tasks.filter((t) => t.id !== task.id));
+  const toggleTask = (task) => run(() => api.patchTask(client.id, project.id, task.id, { done: !task.done }));
+  const removeTask = (task) => run(() => api.deleteTask(client.id, project.id, task.id));
 
-  // Rename a task on blur. Blank reverts (the server drops empty tasks).
+  // Rename a task on blur. Blank reverts (an empty task would be meaningless).
   const commitTask = (task) => () => {
     const next = (taskDrafts[task.id] ?? '').trim();
     setTaskDrafts((d) => {
       const { [task.id]: _drop, ...rest } = d;
       return rest;
     });
-    if (next && next !== task.text) persistTasks(tasks.map((t) => (t.id === task.id ? { ...t, text: next } : t)));
+    if (next && next !== task.text) run(() => api.patchTask(client.id, project.id, task.id, { text: next }));
   };
 
   // One row of the info grid — a label plus either the read-only pill or the
