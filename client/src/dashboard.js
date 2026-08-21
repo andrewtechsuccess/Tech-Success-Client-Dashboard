@@ -165,15 +165,58 @@ export function addDays(d, n) {
 // day come out as 0.96 and round the wrong way.
 export const diffDays = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY_MS);
 
-// A project's span on the timeline, or null if it has no dates at all. One date
-// alone gives a single-day marker, as does an end that lands before the start.
+// A target quarter, for work that's expected in a rough window rather than on
+// known dates. Stored as "2026-Q4"; shown as "Q4-26".
+export const QUARTER_RE = /^(\d{4})-Q([1-4])$/;
+
+export const quarterLabel = (q) => {
+  const m = QUARTER_RE.exec(q || '');
+  return m ? `Q${m[2]}-${m[1].slice(2)}` : '';
+};
+
+// The calendar span of a quarter: first day of its first month to the last day
+// of its third.
+export function quarterRange(q) {
+  const m = QUARTER_RE.exec(q || '');
+  if (!m) return null;
+  const year = Number(m[1]);
+  const firstMonth = (Number(m[2]) - 1) * 3;
+  return { from: new Date(year, firstMonth, 1), to: new Date(year, firstMonth + 3, 0) };
+}
+
+export const quarterOf = (d) => `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+
+// The current quarter plus the next `count` — what you can plan into.
+export function futureQuarters(count = 8, from = new Date()) {
+  const out = [];
+  let year = from.getFullYear();
+  let q = Math.floor(from.getMonth() / 3) + 1;
+  for (let i = 0; i <= count; i++) {
+    out.push({ value: `${year}-Q${q}`, label: `Q${q}-${String(year).slice(2)}` });
+    if (++q > 4) {
+      q = 1;
+      year++;
+    }
+  }
+  return out;
+}
+
+// A project's span on the timeline, or null if there's nothing to place it by.
+// Real dates win; a target quarter is the fallback and marks the span tentative
+// so the chart can draw it as a rough intention rather than a commitment. One
+// date alone gives a single-day marker, as does an end that lands before the
+// start.
 export function projectSpan(p) {
   const s = parseDue(p?.start);
   const e = parseDue(p?.end);
-  if (!s && !e) return null;
+  if (!s && !e) {
+    const q = quarterRange(p?.quarter);
+    if (!q) return null;
+    return { from: q.from, to: q.to, days: diffDays(q.from, q.to) + 1, tentative: true };
+  }
   const from = s || e;
   const to = e && e >= from ? e : from;
-  return { from, to, days: diffDays(from, to) + 1 };
+  return { from, to, days: diffDays(from, to) + 1, tentative: false };
 }
 
 // Open and already past its end date.
@@ -223,6 +266,74 @@ export function clientRoadmap(client, templates, catalogOrder) {
   }
   items.sort((a, b) => a.date - b.date);
   return { items, undatedTasks, undatedProjects };
+}
+
+// Estimated effort on a project, in hours. 0 means nobody has estimated it —
+// the roll-ups count those separately rather than treating them as free work.
+export const projectHours = (p) => {
+  const n = Number(p?.hours);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+// Hours read better as "12h" / "1.5h" than as raw numbers.
+export const fmtHours = (n) => (n ? `${Number(n.toFixed(2))}h` : '—');
+
+// Workload per project manager, from the projects they own. Completed work is
+// excluded — this answers "who is carrying what right now", so a PM shouldn't
+// look loaded because of everything they finished last quarter.
+export function pmWorkload(clients) {
+  const m = new Map();
+  const get = (name) => {
+    if (!m.has(name)) {
+      m.set(name, {
+        pm: name,
+        openProjects: 0,
+        hours: 0,
+        activeHours: 0,
+        unestimated: 0,
+        overdue: 0,
+        clients: new Set()
+      });
+    }
+    return m.get(name);
+  };
+
+  for (const c of clients) {
+    for (const p of c.projects || []) {
+      if (p.status === 'completed') continue;
+      const w = get((p.owner || '').trim() || UNASSIGNED);
+      const h = projectHours(p);
+      w.openProjects++;
+      w.hours += h;
+      if (p.status === 'approved' || p.status === 'in_progress') w.activeHours += h;
+      if (!h) w.unestimated++;
+      if (isOverdue(p)) w.overdue++;
+      w.clients.add(c.id);
+    }
+  }
+
+  return [...m.values()]
+    .map((w) => ({ ...w, clients: w.clients.size }))
+    .sort((a, b) => {
+      if (a.pm === UNASSIGNED) return 1;
+      if (b.pm === UNASSIGNED) return -1;
+      return b.hours - a.hours || b.openProjects - a.openProjects || a.pm.localeCompare(b.pm);
+    });
+}
+
+// Open estimated hours across a set of clients, for a board column header.
+export function openHours(clients) {
+  let hours = 0;
+  let unestimated = 0;
+  for (const c of clients) {
+    for (const p of c.projects || []) {
+      if (p.status === 'completed') continue;
+      const h = projectHours(p);
+      hours += h;
+      if (!h) unestimated++;
+    }
+  }
+  return { hours, unestimated };
 }
 
 // Distinct account-manager names across clients (for the editor's datalist and grouping).

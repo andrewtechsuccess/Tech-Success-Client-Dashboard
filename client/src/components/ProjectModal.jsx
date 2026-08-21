@@ -12,7 +12,11 @@ import {
   projectScope,
   staffList,
   externalHref,
-  isOverdue
+  isOverdue,
+  projectHours,
+  fmtHours,
+  futureQuarters,
+  quarterLabel
 } from '../dashboard.js';
 
 // Planner-style detail view of a single project/issue, opened from the projects
@@ -39,7 +43,8 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
     setDraft({
       title: project.title,
       connectwiseLink: project.connectwiseLink || '',
-      notes: project.notes || ''
+      notes: project.notes || '',
+      hours: projectHours(project) ? String(projectHours(project)) : ''
     });
     setTaskDrafts({});
     setEditing(false);
@@ -93,6 +98,19 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
     if (value !== (project[key] || '')) patchProject({ [key]: value });
   };
 
+  // Hours are numeric, so they compare and revert differently to the text
+  // fields: a blank box means "no estimate", which the server stores as 0.
+  const commitHours = () => {
+    const raw = (draft.hours ?? '').trim();
+    const n = raw === '' ? 0 : Number(raw);
+    if (!Number.isFinite(n) || n < 0) {
+      setDraft((d) => ({ ...d, hours: projectHours(project) ? String(projectHours(project)) : '' }));
+      return;
+    }
+    setDraft((d) => ({ ...d, hours: n ? String(n) : '' }));
+    if (n !== projectHours(project)) patchProject({ hours: n });
+  };
+
   const onDraftKey = (key) => (e) => {
     if (e.key === 'Enter' && key !== 'notes') e.target.blur();
     if (e.key === 'Escape') {
@@ -138,6 +156,14 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
   };
 
   const hasLink = !!project.connectwiseLink;
+  // Current quarter + the next 8. A project already targeting an older quarter
+  // keeps it as an option so opening the modal can't silently clear it.
+  const quarters = futureQuarters(8);
+  const quarterOptions =
+    project.quarter && !quarters.some((q) => q.value === project.quarter)
+      ? [{ value: project.quarter, label: quarterLabel(project.quarter) }, ...quarters]
+      : quarters;
+  const dated = !!(project.start || project.end);
 
   return (
     <>
@@ -257,6 +283,54 @@ export default function ProjectModal({ client, project, onClose, onOpenClient, o
                 {staff.map((s) => (
                   <option key={s} value={s}>
                     {s}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {field(
+              'Estimate',
+              <span className={projectHours(project) ? undefined : 'muted'}>{fmtHours(projectHours(project))}</span>,
+              <input
+                className="pm-sel"
+                type="number"
+                min="0"
+                step="0.5"
+                placeholder="hrs"
+                aria-label="Estimated hours"
+                value={draft.hours ?? ''}
+                disabled={busy}
+                onChange={(e) => setDraft((d) => ({ ...d, hours: e.target.value }))}
+                onBlur={commitHours}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.target.blur();
+                  if (e.key === 'Escape') {
+                    setDraft((d) => ({ ...d, hours: projectHours(project) ? String(projectHours(project)) : '' }));
+                    e.stopPropagation();
+                    e.target.blur();
+                  }
+                }}
+              />
+            )}
+
+            {field(
+              'Target quarter',
+              project.quarter ? (
+                <span className={dated ? 'muted' : undefined}>{quarterLabel(project.quarter)}</span>
+              ) : (
+                <span className="muted">—</span>
+              ),
+              <select
+                className="pm-sel"
+                value={project.quarter || ''}
+                disabled={busy}
+                onChange={setField('quarter')}
+                title={dated ? 'Start/end dates take precedence over the quarter' : 'Rough placement on the Gantt'}
+              >
+                <option value="">— none —</option>
+                {quarterOptions.map((q) => (
+                  <option key={q.value} value={q.value}>
+                    {q.label}
                   </option>
                 ))}
               </select>

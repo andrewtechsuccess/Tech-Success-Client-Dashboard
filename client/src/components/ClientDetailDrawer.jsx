@@ -26,6 +26,8 @@ const newProject = () => ({
   status: 'opportunity',
   priority: 'medium',
   owner: '',
+  hours: 0,
+  quarter: '',
   start: '',
   end: '',
   connectwiseLink: '',
@@ -112,7 +114,7 @@ export default function ClientDetailDrawer({ client, onClose }) {
         if (!keptProducts.has(was.id) && !was.template) await api.deleteProduct(client.id, was.id);
       }
 
-      const PROJECT_KEYS = ['title', 'type', 'scope', 'status', 'priority', 'owner', 'start', 'end', 'connectwiseLink', 'notes'];
+      const PROJECT_KEYS = ['title', 'type', 'scope', 'status', 'priority', 'owner', 'hours', 'quarter', 'start', 'end', 'connectwiseLink', 'notes'];
       const beforeProjects = new Map((original.projects || []).map((p) => [p.id, p]));
       for (const j of projects) {
         const was = beforeProjects.get(j.id);
@@ -310,6 +312,16 @@ export default function ClientDetailDrawer({ client, onClose }) {
                       </option>
                     ))}
                   </select>
+                  <input
+                    className="er-hours"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="hrs"
+                    title="Estimated hours"
+                    value={j.hours || ''}
+                    onChange={(e) => setProject(j.id, { hours: e.target.value === '' ? 0 : Number(e.target.value) })}
+                  />
                   <input
                     type="date"
                     title="Start date"

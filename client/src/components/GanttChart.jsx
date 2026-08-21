@@ -4,8 +4,12 @@ import {
   PROJECT_STATUS_LABEL,
   PRIORITY_LABEL,
   projectScope,
+  projectHours,
+  fmtHours,
   projectSpan,
   isOverdue,
+  futureQuarters,
+  quarterLabel,
   startOfDay,
   addDays,
   diffDays,
@@ -77,8 +81,10 @@ function segments(kind, from, to, labelFn) {
   return out;
 }
 
-export default function GanttChart({ rows, onOpenProject, onOpenClient }) {
+export default function GanttChart({ rows, onOpenProject, onOpenClient, onSetQuarter }) {
   const [zoom, setZoom] = useState('weeks');
+  const [pendingQuarter, setPendingQuarter] = useState(''); // row id being saved
+  const quarters = useMemo(() => futureQuarters(8), []);
   const scrollRef = useRef(null);
   const z = ZOOMS.find((x) => x.value === zoom) || ZOOMS[0];
 
@@ -248,9 +254,12 @@ export default function GanttChart({ rows, onOpenProject, onOpenClient }) {
                   const overdue = isOverdue(r);
                   const tip = [
                     r.title,
-                    `${fmtStored(r.start) === '—' ? 'No start' : fmtStored(r.start)} → ${fmtStored(r.end)}`,
+                    r.span.tentative
+                      ? `Tentative — targeting ${quarterLabel(r.quarter)}`
+                      : `${fmtStored(r.start) === '—' ? 'No start' : fmtStored(r.start)} → ${fmtStored(r.end)}`,
                     `${PROJECT_STATUS_LABEL[r.status]} · ${PRIORITY_LABEL[r.priority] || 'No priority'}`,
                     r.owner ? `PM: ${r.owner}` : 'Unassigned',
+                    projectHours(r) ? `Estimate: ${fmtHours(projectHours(r))}` : null,
                     tasks.length ? `Tasks: ${done}/${tasks.length}` : null,
                     overdue ? 'Overdue' : null
                   ]
@@ -268,7 +277,7 @@ export default function GanttChart({ rows, onOpenProject, onOpenClient }) {
                       </div>
                       <div className="g-time">
                         <button
-                          className={`g-bar ${r.status}${overdue ? ' overdue' : ''}`}
+                          className={`g-bar ${r.status}${overdue ? ' overdue' : ''}${r.span.tentative ? ' tentative' : ''}`}
                           style={{ left, width: w }}
                           title={tip}
                           onClick={() => onOpenProject(r)}
@@ -276,7 +285,11 @@ export default function GanttChart({ rows, onOpenProject, onOpenClient }) {
                           {pct > 0 && <span className="g-bar-fill" style={{ width: `${pct}%` }} />}
                           {w > 110 && (
                             <span className="g-bar-text">
-                              {r.span.days === 1 ? fmtDate(r.span.from) : `${fmtDate(r.span.from)} – ${fmtDate(r.span.to)}`}
+                              {r.span.tentative
+                                ? `${quarterLabel(r.quarter)} · tentative`
+                                : r.span.days === 1
+                                  ? fmtDate(r.span.from)
+                                  : `${fmtDate(r.span.from)} – ${fmtDate(r.span.to)}`}
                             </span>
                           )}
                         </button>
@@ -293,14 +306,41 @@ export default function GanttChart({ rows, onOpenProject, onOpenClient }) {
       {undated.length > 0 && (
         <div className="card g-undated">
           <h4 className="ev-h">Not scheduled ({undated.length})</h4>
-          <div className="muted sm">These match your filters but have no start or end date, so they can't be plotted.</div>
+          <div className="muted sm">
+            These match your filters but have no dates, so they can't be plotted. Pick a target quarter to place one
+            roughly — it'll appear as a tentative bar across that quarter until real dates are set.
+          </div>
           <div className="g-undated-list">
             {undated.map((r) => (
-              <button className="g-undated-item" key={`${r.clientId}/${r.id}`} onClick={() => onOpenProject(r)}>
-                <span className={`proj-status ${r.status}`}>{PROJECT_STATUS_LABEL[r.status]}</span>
-                <span className="g-undated-title">{r.title}</span>
-                <span className="muted sm">{r.clientName}</span>
-              </button>
+              <div className="g-undated-item" key={`${r.clientId}/${r.id}`}>
+                <button className="g-undated-open" onClick={() => onOpenProject(r)} title="Open project">
+                  <span className={`proj-status ${r.status}`}>{PROJECT_STATUS_LABEL[r.status]}</span>
+                  <span className="g-undated-title">{r.title}</span>
+                  <span className="muted sm">{r.clientName}</span>
+                </button>
+                <select
+                  className="g-quarter-select"
+                  aria-label={`Target quarter for ${r.title}`}
+                  title="Place this in a quarter"
+                  value={r.quarter || ''}
+                  disabled={pendingQuarter === r.id || !onSetQuarter}
+                  onChange={async (e) => {
+                    setPendingQuarter(r.id);
+                    try {
+                      await onSetQuarter(r, e.target.value);
+                    } finally {
+                      setPendingQuarter('');
+                    }
+                  }}
+                >
+                  <option value="">— target quarter —</option>
+                  {quarters.map((q) => (
+                    <option key={q.value} value={q.value}>
+                      {q.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             ))}
           </div>
         </div>

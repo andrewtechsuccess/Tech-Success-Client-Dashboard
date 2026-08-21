@@ -18,7 +18,11 @@ import {
   PRIORITIES,
   PLAN_STATUSES,
   UNASSIGNED,
-  isOverdue
+  isOverdue,
+  projectHours,
+  fmtHours,
+  pmWorkload,
+  openHours
 } from '../dashboard.js';
 import ClientDetailDrawer from '../components/ClientDetailDrawer.jsx';
 import ClientExpanded from '../components/ClientExpanded.jsx';
@@ -229,6 +233,11 @@ function KanbanCard({ row, onOpen, onEdit, onOpenProject, onDragStart, onDragEnd
       </div>
       <div className="kan-meta">
         {row.priority && <span className={`prio-pill ${row.priority}`}>{PRIORITY_LABEL[row.priority]}</span>}
+        {projectHours(row) > 0 && (
+          <span className="hours-pill" title="Estimated effort">
+            {fmtHours(projectHours(row))}
+          </span>
+        )}
         {(row.tasks || []).length > 0 && (
           <span className="kan-tasks" title="Tasks done">
             ☑ {(row.tasks || []).filter((t) => t.done).length}/{(row.tasks || []).length}
@@ -267,7 +276,7 @@ function KanbanCard({ row, onOpen, onEdit, onOpenProject, onDragStart, onDragEnd
 // Projects view: every project/issue across all clients, shown as a kanban
 // board (a column per pipeline status, drag cards to change status), a flat
 // table, or a Gantt timeline. All three share the same filters.
-function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProject, onMove }) {
+function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProject, onMove, onSetQuarter }) {
   const q = filter.trim().toLowerCase();
   const [layout, setLayout] = useState('board'); // 'board' (kanban) | 'table' | 'gantt'
   const [owner, setOwner] = useState('all'); // 'all' | 'none' | <name>
@@ -439,7 +448,12 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
           </StickyHScroll>
         )
       ) : layout === 'gantt' ? (
-        <GanttChart rows={statusRows} onOpenProject={onOpenProject} onOpenClient={onOpen} />
+        <GanttChart
+          rows={statusRows}
+          onOpenProject={onOpenProject}
+          onOpenClient={onOpen}
+          onSetQuarter={onSetQuarter}
+        />
       ) : statusRows.length === 0 ? (
         <div className="card">
           <div className="muted">No projects match the current filters.</div>
@@ -455,6 +469,7 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
                 <th>Project manager</th>
                 <th>Status</th>
                 <th>Priority</th>
+                <th>Est.</th>
                 <th>Start</th>
                 <th>End</th>
                 <th>Account manager</th>
@@ -484,6 +499,7 @@ function ProjectsView({ clients, filter, setFilter, onOpen, onEdit, onOpenProjec
                     <span className={`proj-status ${r.status}`}>{PROJECT_STATUS_LABEL[r.status]}</span>
                   </td>
                   <td className="muted">{PRIORITY_LABEL[r.priority] || '—'}</td>
+                  <td className={projectHours(r) ? 'nowrap' : 'muted'}>{fmtHours(projectHours(r))}</td>
                   <td className="muted">{r.start || '—'}</td>
                   <td className={isOverdue(r) ? 'overdue-cell' : 'muted'}>{r.end || '—'}</td>
                   <td className="muted">{r.accountManager || '—'}</td>
@@ -645,6 +661,31 @@ function RiskView({ clients, filter, setFilter, onOpen, onEdit }) {
   );
 }
 
+// Estimated open hours for one project manager's board column. Counts only the
+// projects that PM actually owns, not everything on the clients they appear
+// under — a client shows up in several columns when its projects have
+// different managers.
+function ColumnHours({ clients, pm }) {
+  const { hours, unestimated } = useMemo(() => {
+    const owned = clients.map((c) => ({
+      ...c,
+      projects: (c.projects || []).filter((p) => ((p.owner || '').trim() || UNASSIGNED) === pm)
+    }));
+    return openHours(owned);
+  }, [clients, pm]);
+
+  if (!hours && !unestimated) return null;
+  return (
+    <span
+      className="hours-pill bch-hours"
+      title={`${fmtHours(hours)} estimated on open work${unestimated ? ` · ${unestimated} without an estimate` : ''}`}
+    >
+      {fmtHours(hours)}
+      {unestimated > 0 && <span className="hp-warn">+{unestimated}?</span>}
+    </span>
+  );
+}
+
 // A simple labelled horizontal bar used in the insights view.
 function Bar({ label, value, total, max, sub, tone = '' }) {
   const pct = total ? Math.round((value / total) * 100) : 0;
@@ -687,6 +728,14 @@ function InsightsView({ clients }) {
     });
   }, [clients]);
   const maxClients = Math.max(1, ...workload.map((w) => w.clients));
+
+  // Per-project-manager workload, driven by the hour estimates on open work.
+  const pm = useMemo(() => pmWorkload(clients), [clients]);
+  const maxPmHours = Math.max(1, ...pm.map((w) => w.hours));
+  const pmTotals = pm.reduce(
+    (t, w) => ({ hours: t.hours + w.hours, open: t.open + w.openProjects, unestimated: t.unestimated + w.unestimated }),
+    { hours: 0, open: 0, unestimated: 0 }
+  );
 
   // Plan-status distribution.
   const plans = useMemo(() => {
@@ -752,6 +801,65 @@ function InsightsView({ clients }) {
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      <div className="card insight-card">
+        <h3>Project manager workload</h3>
+        <div className="muted sm gap-sub">
+          Open projects and issues by the person managing them — completed work is excluded. “Active” counts only
+          Approved and In progress, i.e. what's actually committed rather than still in the pipeline.
+        </div>
+        {pm.length === 0 ? (
+          <div className="muted">No open projects.</div>
+        ) : (
+          <>
+            <table className="hist">
+              <thead>
+                <tr>
+                  <th>Project manager</th>
+                  <th>Estimated load</th>
+                  <th>Open</th>
+                  <th>Active</th>
+                  <th>No estimate</th>
+                  <th>Overdue</th>
+                  <th>Clients</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pm.map((w) => (
+                  <tr key={w.pm}>
+                    <td>{w.pm === UNASSIGNED ? <span className="muted">{UNASSIGNED}</span> : w.pm}</td>
+                    <td>
+                      <span className="wl-bar">
+                        <span className="bar-track sm">
+                          <span className="bar-fill" style={{ width: `${Math.round((w.hours / maxPmHours) * 100)}%` }} />
+                        </span>
+                        <b>{fmtHours(w.hours)}</b>
+                      </span>
+                    </td>
+                    <td className="muted">{w.openProjects}</td>
+                    <td className="muted">{fmtHours(w.activeHours)}</td>
+                    <td>
+                      {w.unestimated ? (
+                        <span className="risk-pill amber" title="Open projects with no hour estimate">
+                          {w.unestimated}
+                        </span>
+                      ) : (
+                        <span className="muted">0</span>
+                      )}
+                    </td>
+                    <td>{w.overdue ? <span className="risk-pill red">{w.overdue}</span> : <span className="muted">0</span>}</td>
+                    <td className="muted">{w.clients}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="muted sm gap-sub">
+              {fmtHours(pmTotals.hours)} estimated across {pmTotals.open} open item{pmTotals.open === 1 ? '' : 's'}
+              {pmTotals.unestimated > 0 && ` · ${pmTotals.unestimated} still without an estimate`}
+            </div>
+          </>
         )}
       </div>
 
@@ -975,6 +1083,15 @@ export default function Dashboard() {
     }
   };
 
+  // Place a project in a rough quarter from the Gantt's unscheduled list.
+  const setProjectQuarter = async (row, quarter) => {
+    try {
+      await save(() => api.patchProject(row.clientId, row.id, { quarter }));
+    } catch (err) {
+      showError(`Could not set the quarter: ${err.message}`);
+    }
+  };
+
   // Inline product status change from a client card.
   const setProductStatus = async (clientId, productId, newStatus) => {
     try {
@@ -1080,6 +1197,7 @@ export default function Dashboard() {
               <div className="board-col-head">
                 <span className="bch-title">{col.key}</span>
                 <span className="bch-count">{col.clients.length}</span>
+                {groupBy === 'pm' && <ColumnHours clients={col.clients} pm={col.key} />}
               </div>
               <div className="board-col-body">
                 {col.key === UNASSIGNED && groupBy === 'am' && (
@@ -1112,6 +1230,7 @@ export default function Dashboard() {
           onEdit={setEditId}
           onOpenProject={(row) => setProjRef({ clientId: row.clientId, projectId: row.id })}
           onMove={moveProject}
+          onSetQuarter={setProjectQuarter}
         />
       )}
 

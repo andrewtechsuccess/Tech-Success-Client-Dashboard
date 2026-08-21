@@ -2932,6 +2932,76 @@ button.bl-pill.quick:hover {
   color: var(--danger);
 }
 
+/* Tentative bars: placed by target quarter, not real dates. Hatched fill and a
+   dashed edge so a rough intention never reads as a committed date range. */
+.g-bar.tentative {
+  border-style: dashed;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0,
+    rgba(255, 255, 255, 0.12) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+  opacity: 0.9;
+}
+.g-bar.tentative .g-bar-text {
+  font-style: italic;
+}
+.g-undated-item {
+  padding: 0;
+  overflow: hidden;
+}
+.g-undated-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.g-quarter-select {
+  width: auto;
+  flex: 0 0 auto;
+  margin-right: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* ---------- Hour estimates ---------- */
+.hours-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* Unestimated work is a gap in the number, not a zero — call it out. */
+.hp-warn {
+  margin-left: 4px;
+  color: var(--warn);
+}
+.bch-hours {
+  margin-left: auto;
+}
+.er-hours {
+  width: 80px;
+  flex-shrink: 0;
+}
+.edit-row.wrap > input.er-hours {
+  flex: 0 0 80px;
+}
+
 /* Print: light palette, hide chrome, keep the report content. */
 @media print {
   :root[data-theme='dark'],

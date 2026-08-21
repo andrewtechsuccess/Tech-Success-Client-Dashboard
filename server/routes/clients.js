@@ -30,6 +30,19 @@ const normUrl = (v) => {
   return /^https?:\/\//i.test(s) ? s : `https://${s}`;
 };
 
+// Estimated effort in hours. Blank/invalid means "not estimated yet", which
+// is stored as 0 so the field is always a number for the roll-ups.
+const normHours = (v) => {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(100000, Math.round(n * 100) / 100);
+};
+
+// Target quarter for work that's planned to a rough window rather than exact
+// dates, stored as "2026-Q4". Anything else becomes blank so a bad value can't
+// place a bar at a nonsense point on the timeline.
+const normQuarter = (v) => (/^\d{4}-Q[1-4]$/.test(str(v)) ? str(v) : '');
+
 // Client sentiment is a 1-5 rating (3 = neutral default).
 const normSentiment = (v) => {
   const n = Math.round(Number(v));
@@ -92,6 +105,8 @@ function normProjects(arr) {
       status: PROJECT_STATUSES.has(p?.status) ? p.status : 'opportunity',
       priority: PRIORITIES.has(p?.priority) ? p.priority : 'medium',
       owner: str(p?.owner),
+      hours: normHours(p?.hours),
+      quarter: normQuarter(p?.quarter),
       start: str(p?.start),
       end: str(p?.end !== undefined ? p.end : p?.due),
       connectwiseLink: normUrl(p?.connectwiseLink),
@@ -142,6 +157,8 @@ const PROJECT_FIELDS = {
   status: (v) => (PROJECT_STATUSES.has(v) ? v : 'opportunity'),
   priority: (v) => (PRIORITIES.has(v) ? v : 'medium'),
   owner: str,
+  hours: normHours,
+  quarter: normQuarter,
   start: str,
   end: str,
   connectwiseLink: normUrl,
